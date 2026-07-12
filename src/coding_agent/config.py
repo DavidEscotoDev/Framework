@@ -38,7 +38,7 @@ class StaticAnalysisConfig(BaseModel):
 class AgentConfig(BaseModel):
     temperature: float = 0.3
     max_tokens: int = 4000
-    prompt_version: str = "1.0.0"
+    prompt_version: str = "v1.0.0"
     timeout_seconds: int = 60
     quality_threshold: int = 70
     coverage_threshold: int = 80

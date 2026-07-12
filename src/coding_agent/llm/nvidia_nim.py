@@ -7,7 +7,8 @@ from .models import LLMMessage, LLMParams, LLMResponse, TokenUsage
 class NVIDIANIMProvider(LLMProvider):
     def __init__(self, config, api_key: str):
         if not api_key:
-            raise ValueError("NVIDIA NIM API key is required")
+            self._client = None  # Will fail on generate
+
         self._config = config
         self._api_key = api_key
         self._base_url = config.api_base or "https://integrate.api.nvidia.com/v1"

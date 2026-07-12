@@ -8,7 +8,7 @@ class OpenAIProvider(LLMProvider):
     def __init__(self, config, api_key: str):
         self._config = config
         self._api_key = api_key
-        self._client = AsyncOpenAI(api_key=api_key, timeout=config.timeout_seconds)
+        self._client = AsyncOpenAI(api_key=api_key, timeout=60)
 
     @property
     def name(self) -> str:

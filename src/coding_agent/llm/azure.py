@@ -14,7 +14,7 @@ class AzureOpenAIProvider(LLMProvider):
             api_key=api_key,
             azure_endpoint=endpoint,
             api_version="2024-02-15-preview",
-            timeout=config.timeout_seconds,
+            timeout=60,
         )
 
     @property

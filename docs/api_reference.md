@@ -7,6 +7,7 @@
 Generate code from a natural language request.
 
 **Request:**
+
 ```json
 {
   "user_request": "string",
@@ -24,6 +25,7 @@ Generate code from a natural language request.
 ```
 
 **Response:**
+
 ```json
 {
   "status": "success|partial|failed",
@@ -43,6 +45,7 @@ Generate code from a natural language request.
 Health check endpoint.
 
 **Response:**
+
 ```json
 {
   "status": "healthy",
@@ -55,6 +58,7 @@ Health check endpoint.
 Get status of all agents and LLM provider.
 
 **Response:**
+
 ```json
 {
   "llm_provider": "string",
@@ -72,6 +76,7 @@ Streaming progress updates for code generation.
 **Send:** GenerationRequest JSON
 
 **Receive:** ProgressUpdate JSON per stage:
+
 ```json
 {
   "stage": "planner|coder|reviewer|tester",
@@ -94,9 +99,10 @@ print(result.code.code)
 ```
 
 ### Streaming
+
 ```python
 async for update in orchestrator.generate_code_streaming(request):
-    print(f"[{update[stage]}] {update[message]}")
+    print(f"[{update['stage']}] {update['message']}")
 ```
 
 ## CLI
@@ -114,4 +120,3 @@ coding-agent serve --host 0.0.0.0 --port 8000
 # Show config
 coding-agent config
 ```
-

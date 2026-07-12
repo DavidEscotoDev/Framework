@@ -39,4 +39,3 @@ User Request
 - **LLM Provider Abstraction**: Multi-provider support (NVIDIA NIM, OpenAI, Azure, Ollama)
 - **Sandbox**: Safe code execution with malware scanning
 - **Observability**: Structured logging, OpenTelemetry tracing, Prometheus metrics
-

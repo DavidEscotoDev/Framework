@@ -1,12 +1,17 @@
 from __future__ import annotations
+
 from pathlib import Path
+
 from pydantic import BaseModel
+
 
 class PromptTemplate(BaseModel):
     system: str
     user: str
 
+
 PROMPTS_DIR = Path(__file__).parent
+
 
 def load_prompt(agent: str, version: str = "1.0.0") -> PromptTemplate:
     base = PROMPTS_DIR / agent / version
@@ -20,6 +25,7 @@ def load_prompt(agent: str, version: str = "1.0.0") -> PromptTemplate:
         system=system_path.read_text(encoding="utf-8"),
         user=user_path.read_text(encoding="utf-8"),
     )
+
 
 def render_prompt(template: str, **kwargs) -> str:
     for key, value in kwargs.items():

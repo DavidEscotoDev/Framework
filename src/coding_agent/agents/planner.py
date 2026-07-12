@@ -1,9 +1,12 @@
 from __future__ import annotations
+
 import json
+
 from ..contracts import ImplementationPlan
 from ..prompts.loader import load_prompt
 from .base import BaseAgent
 from .models import AgentConfig, AgentResult
+
 
 class PlannerAgent(BaseAgent):
     def __init__(self, llm, config: AgentConfig | None = None):

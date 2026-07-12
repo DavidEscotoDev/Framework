@@ -1,8 +1,12 @@
 from __future__ import annotations
+
 import time
+
 import httpx
+
 from .base import LLMProvider
-from .models import LLMMessage, LLMParams, LLMResponse, TokenUsage
+from .models import LLMResponse, TokenUsage
+
 
 class NVIDIANIMProvider(LLMProvider):
     def __init__(self, config, api_key: str):
@@ -41,7 +45,6 @@ class NVIDIANIMProvider(LLMProvider):
         elapsed = (time.monotonic() - start) * 1000
         choice = data["choices"][0]
         usage = data.get("usage", {})
-        from .models import LLMResponse, TokenUsage
         return LLMResponse(
             content=choice["message"]["content"],
             usage=TokenUsage(

@@ -1,19 +1,23 @@
 from __future__ import annotations
+
 import time
-import asyncio
-from uuid import uuid4
+from collections.abc import AsyncIterator
 from datetime import datetime
-from typing import AsyncIterator
+from uuid import uuid4
+
+from .agents import CoderAgent, PlannerAgent, ReviewerAgent, TesterAgent
 from .config import Config
-from .schemas import GenerationRequest, GenerationResult, GenerationMetadata
-from .state import SharedState
-from .llm.factory import initialize_providers, get_provider
-from .agents import PlannerAgent, CoderAgent, ReviewerAgent, TesterAgent
+from .llm.factory import get_provider, initialize_providers
 from .observability.logging import get_logger
 from .observability.metrics import (
-    pipeline_requests, pipeline_latency, agent_latency,
-    llm_tokens, active_requests
+    active_requests,
+    agent_latency,
+    pipeline_latency,
+    pipeline_requests,
 )
+from .schemas import GenerationMetadata, GenerationRequest, GenerationResult
+from .state import SharedState
+
 
 class ProgressUpdate:
     def __init__(self, stage: str, status: str, message: str, data: dict = None):
@@ -21,6 +25,7 @@ class ProgressUpdate:
         self.status = status
         self.message = message
         self.data = data or {}
+
 
 class CodeOrchestrator:
     def __init__(self, config: Config | None = None):
@@ -83,9 +88,15 @@ class CodeOrchestrator:
             result = await self._run_agent("reviewer", state, metadata)
             if not result.success:
                 return self._build_result("failed", request, state, metadata, errors=[result.error])
-            if self.config.orchestrator.halt_on_review_failure and state.review and not state.review.passed:
+            if (
+                self.config.orchestrator.halt_on_review_failure
+                and state.review
+                and not state.review.passed
+            ):
                 self.logger.warning("Review failed, halting")
-                return self._build_result("partial", request, state, metadata, warnings=state.review.issues)
+                return self._build_result(
+                    "partial", request, state, metadata, _warnings=state.review.issues
+                )
 
             # Stage 4: Test
             if request.options.run_tests:
@@ -120,7 +131,15 @@ class CodeOrchestrator:
         metadata.llm_calls += agent.execution_count
         return result
 
-    def _build_result(self, status: str, request: GenerationRequest, state: SharedState, metadata: GenerationMetadata, errors=None, warnings=None):
+    def _build_result(
+        self,
+        status: str,
+        request: GenerationRequest,
+        state: SharedState,
+        metadata: GenerationMetadata,
+        errors=None,
+        _warnings=None,
+    ):
         return GenerationResult(
             status=status,
             request_id=metadata.request_id,
@@ -148,34 +167,72 @@ class CodeOrchestrator:
         )
         self._ensure_agents()
 
-        yield {"stage": "planner", "status": "started", "message": "Creating implementation plan..."}
+        yield {
+            "stage": "planner",
+            "status": "started",
+            "message": "Creating implementation plan...",
+        }
         result = await self._run_agent("planner", state, metadata)
         if not result.success:
             yield {"stage": "planner", "status": "failed", "message": result.error}
             return
-        yield {"stage": "planner", "status": "completed", "message": "Plan created", "data": state.plan}
+        yield {
+            "stage": "planner",
+            "status": "completed",
+            "message": "Plan created",
+            "data": state.plan,
+        }
 
         yield {"stage": "coder", "status": "started", "message": "Generating code..."}
         result = await self._run_agent("coder", state, metadata)
         if not result.success:
             yield {"stage": "coder", "status": "failed", "message": result.error}
             return
-        yield {"stage": "coder", "status": "completed", "message": "Code generated", "data": state.code}
+        yield {
+            "stage": "coder",
+            "status": "completed",
+            "message": "Code generated",
+            "data": state.code,
+        }
 
         yield {"stage": "reviewer", "status": "started", "message": "Reviewing code..."}
         result = await self._run_agent("reviewer", state, metadata)
         if not result.success:
             yield {"stage": "reviewer", "status": "failed", "message": result.error}
             return
-        yield {"stage": "reviewer", "status": "completed", "message": "Review complete", "data": state.review}
-        if self.config.orchestrator.halt_on_review_failure and state.review and not state.review.passed:
-            yield {"stage": "reviewer", "status": "failed", "message": "Review failed, halting", "data": state.review}
+        yield {
+            "stage": "reviewer",
+            "status": "completed",
+            "message": "Review complete",
+            "data": state.review,
+        }
+        if (
+            self.config.orchestrator.halt_on_review_failure
+            and state.review
+            and not state.review.passed
+        ):
+            yield {
+                "stage": "reviewer",
+                "status": "failed",
+                "message": "Review failed, halting",
+                "data": state.review,
+            }
             return
         yield {"stage": "tester", "status": "started", "message": "Running tests..."}
         result = await self._run_agent("tester", state, metadata)
         elapsed = (time.monotonic() - start) * 1000
         metadata.total_latency_ms = elapsed
         metadata.completed_at = datetime.utcnow()
-        yield {"stage": "tester", "status": "completed", "message": "Tests complete", "data": state.tests}
+        yield {
+            "stage": "tester",
+            "status": "completed",
+            "message": "Tests complete",
+            "data": state.tests,
+        }
         result = self._build_result("success", request, state, metadata)
-        yield {"stage": "complete", "status": "completed", "message": "Pipeline complete", "result": result}
+        yield {
+            "stage": "complete",
+            "status": "completed",
+            "message": "Pipeline complete",
+            "result": result,
+        }

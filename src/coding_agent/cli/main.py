@@ -1,15 +1,19 @@
 from __future__ import annotations
+
 import asyncio
+
 import typer
 from rich.console import Console
+
+from ..agents import CoderAgent, PlannerAgent, ReviewerAgent, TesterAgent
 from ..config import Config
-from ..llm.factory import initialize_providers, get_provider
-from ..agents import PlannerAgent, CoderAgent, ReviewerAgent, TesterAgent
+from ..llm.factory import get_provider, initialize_providers
 from ..orchestrator import CodeOrchestrator
 from ..schemas import GenerationRequest
 
 app = typer.Typer(name="coding-agent", help="Multi-agent code generation system")
 console = Console()
+
 
 @app.command()
 def generate(
@@ -18,10 +22,13 @@ def generate(
     format: str = typer.Option("text", "--format", "-f", help="Output format: text, json"),
 ):
     """Generate code from a natural language request."""
+
     async def _run():
         cfg = Config()
+
         def get_key(cfg):
             return cfg.get_provider_api_key(cfg)
+
         initialize_providers(cfg.llm.providers, get_key, cfg.llm.fallback_chain)
 
         llm = get_provider()
@@ -38,14 +45,16 @@ def generate(
             console.print_json(result.model_dump_json(indent=2))
         else:
             if result.code:
-                console.print(f"[bold green]Generated Code:[/]")
+                console.print("[bold green]Generated Code:[/]")
                 console.print(result.code.code)
                 if result.review:
                     console.print(f"[bold]Review Score:[/] {result.review.quality_score}/100")
                     if result.review.issues:
                         console.print(f"[red]Issues: {len(result.review.issues)}[/]")
                 if result.tests:
-                    console.print(f"[bold]Tests:[/] {result.tests.passed} passed, {result.tests.failed} failed")
+                    console.print(
+                        f"[bold]Tests:[/] {result.tests.passed} passed, {result.tests.failed} failed"
+                    )
             if result.errors:
                 console.print(f"[red]Errors: {result.errors}[/]")
 
@@ -56,6 +65,7 @@ def generate(
 
     asyncio.run(_run())
 
+
 @app.command()
 def serve(
     host: str = typer.Option("0.0.0.0", "--host", help="Bind host"),
@@ -63,14 +73,18 @@ def serve(
 ):
     """Start the FastAPI server."""
     import uvicorn
+
     uvicorn.run("coding_agent.api.server:create_app", host=host, port=port, factory=True)
+
 
 @app.command()
 def config():
     """Show current configuration."""
     import yaml
+
     cfg = Config()
     console.print(yaml.dump(cfg.model_dump(), default_flow_style=False))
+
 
 if __name__ == "__main__":
     app()

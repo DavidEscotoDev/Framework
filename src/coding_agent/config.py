@@ -1,10 +1,12 @@
 from __future__ import annotations
+
 import os
 from pathlib import Path
-from typing import Literal, Optional
-from pydantic import BaseModel, Field
-from pydantic_settings import BaseSettings, SettingsConfigDict
+from typing import Literal
+
 import yaml
+from pydantic import BaseModel
+from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
 class LLMProviderConfig(BaseModel):
@@ -48,8 +50,12 @@ class AgentConfig(BaseModel):
 class AgentsConfig(BaseModel):
     planner: AgentConfig = AgentConfig(temperature=0.2, max_tokens=2000, timeout_seconds=30)
     coder: AgentConfig = AgentConfig(temperature=0.3, max_tokens=4000, timeout_seconds=60)
-    reviewer: AgentConfig = AgentConfig(temperature=0.1, max_tokens=3000, timeout_seconds=30, quality_threshold=70)
-    tester: AgentConfig = AgentConfig(temperature=0.2, max_tokens=3000, timeout_seconds=60, coverage_threshold=80)
+    reviewer: AgentConfig = AgentConfig(
+        temperature=0.1, max_tokens=3000, timeout_seconds=30, quality_threshold=70
+    )
+    tester: AgentConfig = AgentConfig(
+        temperature=0.2, max_tokens=3000, timeout_seconds=60, coverage_threshold=80
+    )
 
 
 class SandboxConfig(BaseModel):
@@ -57,9 +63,17 @@ class SandboxConfig(BaseModel):
     memory_limit_mb: int = 512
     production_mode: bool = False
     allowed_imports: list[str] = [
-        "json", "re", "math", "datetime", "collections",
-        "itertools", "typing", "dataclasses", "enum",
-        "functools", "operator",
+        "json",
+        "re",
+        "math",
+        "datetime",
+        "collections",
+        "itertools",
+        "typing",
+        "dataclasses",
+        "enum",
+        "functools",
+        "operator",
     ]
 
 

@@ -1,10 +1,13 @@
 from __future__ import annotations
+
 import ast
 import json
+
 from ..contracts import GeneratedCode
 from ..prompts.loader import load_prompt
 from .base import BaseAgent
 from .models import AgentConfig, AgentResult
+
 
 class CoderAgent(BaseAgent):
     def __init__(self, llm, config: AgentConfig | None = None):
@@ -29,7 +32,7 @@ class CoderAgent(BaseAgent):
                 code=content,
                 language="python",
                 imports=self._extract_imports(content),
-                has_docstrings=chr(34)*3 in content or chr(39)*3 in content,
+                has_docstrings=chr(34) * 3 in content or chr(39) * 3 in content,
                 has_type_hints=":" in content.split("\n")[0] if content.split("\n") else False,
             )
             ast.parse(content)

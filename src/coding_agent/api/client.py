@@ -1,9 +1,12 @@
 from __future__ import annotations
+
 import asyncio
-from typing import AsyncIterator
-from ..schemas import GenerationRequest, GenerationResult
-from ..orchestrator import CodeOrchestrator
+from collections.abc import AsyncIterator
+
 from ..config import Config
+from ..orchestrator import CodeOrchestrator
+from ..schemas import GenerationRequest, GenerationResult
+
 
 class CodingAgentClient:
     def __init__(self, config: Config | None = None):

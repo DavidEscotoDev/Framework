@@ -1,5 +1,7 @@
 from __future__ import annotations
+
 import structlog
+
 
 def configure_logging(log_level: str = "INFO", log_format: str = "json"):
     if log_format == "json":
@@ -29,7 +31,11 @@ def configure_logging(log_level: str = "INFO", log_format: str = "json"):
         cache_logger_on_first_use=True,
     )
     import logging
-    logging.basicConfig(format="%(message)s", level=getattr(logging, log_level.upper(), logging.INFO))
+
+    logging.basicConfig(
+        format="%(message)s", level=getattr(logging, log_level.upper(), logging.INFO)
+    )
+
 
 def get_logger(name: str):
     return structlog.get_logger(name)

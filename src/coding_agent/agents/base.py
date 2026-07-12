@@ -1,12 +1,14 @@
 from __future__ import annotations
+
 from abc import ABC, abstractmethod
-from typing import Any
+
 from ..llm.base import LLMProvider
 from ..llm.models import LLMMessage, LLMParams
+from ..observability.logging import get_logger
 from ..prompts.loader import PromptTemplate, render_prompt
 from ..state import SharedState
-from ..observability.logging import get_logger
 from .models import AgentConfig, AgentResult
+
 
 class BaseAgent(ABC):
     def __init__(self, name: str, llm: LLMProvider, prompt: PromptTemplate, config: AgentConfig):
@@ -22,7 +24,9 @@ class BaseAgent(ABC):
     async def execute(self, state: SharedState) -> AgentResult:
         pass
 
-    async def _call_llm(self, user_template: str, system_override: str | None = None, **kwargs) -> str:
+    async def _call_llm(
+        self, user_template: str, system_override: str | None = None, **kwargs
+    ) -> str:
         system = system_override or self._prompt.system
         user = render_prompt(user_template, **kwargs)
         messages = [

@@ -1,16 +1,19 @@
 from __future__ import annotations
+
 from datetime import datetime
-from typing import Optional
+
 from pydantic import BaseModel, Field
-from .contracts import ImplementationPlan, GeneratedCode, ReviewResult, TestResult
+
+from .contracts import GeneratedCode, ImplementationPlan, ReviewResult, TestResult
+
 
 class SharedState(BaseModel):
     request_id: str
     user_request: str
-    plan: Optional[ImplementationPlan] = None
-    code: Optional[GeneratedCode] = None
-    review: Optional[ReviewResult] = None
-    tests: Optional[TestResult] = None
+    plan: ImplementationPlan | None = None
+    code: GeneratedCode | None = None
+    review: ReviewResult | None = None
+    tests: TestResult | None = None
     metadata: dict = {}
     created_at: datetime = Field(default_factory=datetime.utcnow)
     updated_at: datetime = Field(default_factory=datetime.utcnow)

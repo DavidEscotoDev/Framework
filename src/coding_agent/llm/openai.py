@@ -1,8 +1,12 @@
 from __future__ import annotations
+
 import time
-from .base import LLMProvider
-from .models import LLMMessage, LLMParams, LLMResponse, TokenUsage
+
 from openai import AsyncOpenAI
+
+from .base import LLMProvider
+from .models import LLMResponse, TokenUsage
+
 
 class OpenAIProvider(LLMProvider):
     def __init__(self, config, api_key: str):
@@ -30,7 +34,6 @@ class OpenAIProvider(LLMProvider):
         elapsed = (time.monotonic() - start) * 1000
         choice = response.choices[0]
         usage = response.usage
-        from .models import LLMResponse, TokenUsage
         return LLMResponse(
             content=choice.message.content,
             usage=TokenUsage(

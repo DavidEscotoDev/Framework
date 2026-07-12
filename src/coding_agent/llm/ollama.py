@@ -1,8 +1,12 @@
 from __future__ import annotations
+
 import time
+
 import httpx
+
 from .base import LLMProvider
-from .models import LLMMessage, LLMParams, LLMResponse, TokenUsage
+from .models import LLMResponse, TokenUsage
+
 
 class OllamaProvider(LLMProvider):
     def __init__(self, config):
@@ -19,7 +23,6 @@ class OllamaProvider(LLMProvider):
         return self._config.models
 
     async def generate(self, messages: list, params) -> object:
-        import time
         start = time.monotonic()
         payload = {
             "model": params.model,
@@ -33,7 +36,6 @@ class OllamaProvider(LLMProvider):
         response.raise_for_status()
         data = response.json()
         elapsed = (time.monotonic() - start) * 1000
-        from .models import LLMResponse, TokenUsage
         return LLMResponse(
             content=data["message"]["content"],
             usage=TokenUsage(
@@ -53,7 +55,7 @@ class OllamaProvider(LLMProvider):
         except Exception:
             return False
 
-    def estimate_cost(self, usage: object) -> float:
+    def estimate_cost(self, _usage: object) -> float:
         return 0.0
 
     async def close(self):

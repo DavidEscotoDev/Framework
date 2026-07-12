@@ -1,9 +1,11 @@
 from __future__ import annotations
+
 import json
-from ..contracts import TestResult
+
 from ..prompts.loader import load_prompt
 from .base import BaseAgent
 from .models import AgentConfig, AgentResult
+
 
 class TesterAgent(BaseAgent):
     def __init__(self, llm, config: AgentConfig | None = None):

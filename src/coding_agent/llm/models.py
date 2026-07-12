@@ -1,15 +1,20 @@
 from __future__ import annotations
-from typing import Literal, Optional
+
+from typing import Literal
+
 from pydantic import BaseModel
+
 
 class LLMMessage(BaseModel):
     role: Literal["system", "user", "assistant"]
     content: str
 
+
 class TokenUsage(BaseModel):
     prompt_tokens: int = 0
     completion_tokens: int = 0
     total_tokens: int = 0
+
 
 class LLMParams(BaseModel):
     model: str
@@ -19,12 +24,14 @@ class LLMParams(BaseModel):
     timeout_seconds: int = 60
     stop: list[str] = []
 
+
 class LLMResponse(BaseModel):
     content: str
     usage: TokenUsage = TokenUsage()
     model: str = ""
     finish_reason: str = "stop"
     latency_ms: float = 0.0
+
 
 class LLMProviderConfig(BaseModel):
     name: str

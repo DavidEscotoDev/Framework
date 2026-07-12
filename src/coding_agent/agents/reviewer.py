@@ -1,9 +1,12 @@
 from __future__ import annotations
+
 import json
+
 from ..contracts import ReviewResult
 from ..prompts.loader import load_prompt
 from .base import BaseAgent
 from .models import AgentConfig, AgentResult
+
 
 class ReviewerAgent(BaseAgent):
     def __init__(self, llm, config: AgentConfig | None = None):
@@ -29,7 +32,12 @@ class ReviewerAgent(BaseAgent):
             threshold = self._config.quality_threshold
             review.passed = review.quality_score >= threshold
             state.update_review(review)
-            self.logger.info("Review complete", score=review.quality_score, passed=review.passed, issues=len(review.issues))
+            self.logger.info(
+                "Review complete",
+                score=review.quality_score,
+                passed=review.passed,
+                issues=len(review.issues),
+            )
             return AgentResult(success=True, data=review)
         except Exception as e:
             self.failure_count += 1

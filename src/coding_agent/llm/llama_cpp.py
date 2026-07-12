@@ -1,8 +1,12 @@
 from __future__ import annotations
+
 import time
+
 import httpx
+
 from .base import LLMProvider
-from .models import LLMMessage, LLMParams, LLMResponse, TokenUsage
+from .models import LLMResponse, TokenUsage
+
 
 class LlamaCppProvider(LLMProvider):
     def __init__(self, config):
@@ -19,7 +23,6 @@ class LlamaCppProvider(LLMProvider):
         return self._config.models
 
     async def generate(self, messages: list, params) -> object:
-        import time
         start = time.monotonic()
         payload = {
             "model": params.model,
@@ -35,7 +38,6 @@ class LlamaCppProvider(LLMProvider):
         elapsed = (time.monotonic() - start) * 1000
         choice = data["choices"][0]
         usage = data.get("usage", {})
-        from .models import LLMResponse, TokenUsage
         return LLMResponse(
             content=choice["message"]["content"],
             usage=TokenUsage(
@@ -55,7 +57,7 @@ class LlamaCppProvider(LLMProvider):
         except Exception:
             return False
 
-    def estimate_cost(self, usage: object) -> float:
+    def estimate_cost(self, _usage: object) -> float:
         return 0.0
 
     async def close(self):

@@ -1,13 +1,17 @@
 from __future__ import annotations
-from fastapi import APIRouter, WebSocket, WebSocketDisconnect
+
 import json
-from ..schemas import GenerationRequest
-from ..orchestrator import CodeOrchestrator
+
+from fastapi import APIRouter, WebSocket, WebSocketDisconnect
+
 from ..config import Config
+from ..orchestrator import CodeOrchestrator
+from ..schemas import GenerationRequest
 
 ws_router = APIRouter()
 
 _orchestrator = None
+
 
 def get_orchestrator():
     global _orchestrator
@@ -15,6 +19,7 @@ def get_orchestrator():
         cfg = Config()
         _orchestrator = CodeOrchestrator(cfg)
     return _orchestrator
+
 
 @ws_router.websocket("/ws/generate")
 async def websocket_generate(websocket: WebSocket):

@@ -1,9 +1,13 @@
 from __future__ import annotations
-import time
+
 import os
-from .base import LLMProvider
-from .models import LLMMessage, LLMParams, LLMResponse, TokenUsage
+import time
+
 from openai import AsyncAzureOpenAI
+
+from .base import LLMProvider
+from .models import LLMResponse, TokenUsage
+
 
 class AzureOpenAIProvider(LLMProvider):
     def __init__(self, config, api_key: str):
@@ -26,7 +30,6 @@ class AzureOpenAIProvider(LLMProvider):
         return self._config.models
 
     async def generate(self, messages: list, params) -> object:
-        import time
         start = time.monotonic()
         response = await self._client.chat.completions.create(
             model=params.model,
@@ -38,7 +41,6 @@ class AzureOpenAIProvider(LLMProvider):
         elapsed = (time.monotonic() - start) * 1000
         choice = response.choices[0]
         usage = response.usage
-        from .models import LLMResponse, TokenUsage
         return LLMResponse(
             content=choice.message.content,
             usage=TokenUsage(

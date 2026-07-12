@@ -58,44 +58,44 @@ layout: default
 
 ## System Architecture
 
-```mermaid
+<div class="mermaid">
 graph TB
     subgraph ENTRY["Entry Points"]
-        CLI["Typer CLI<br/>• generate, serve, config"]
-        REST["FastAPI REST<br/>• POST /generate<br/>• GET /health"]
-        WS["WebSocket<br/>• /ws/generate<br/>• Real-time streaming"]
-        PY["Python Client<br/>• CodingAgentClient"]
+        CLI["Typer CLI"]
+        REST["FastAPI REST"]
+        WS["WebSocket Streaming"]
+        PY["Python Client"]
     end
 
     subgraph ORCH["Pipeline Orchestrator"]
-        CO["CodeOrchestrator<br/>• Pipeline coordination<br/>• Retry + fallback<br/>• Streaming events<br/>• Metrics collection"]
+        CO["CodeOrchestrator<br/>Retry + Fallback<br/>Streaming + Metrics"]
     end
 
     subgraph AGENTS["Agent Swarm"]
-        PL["Planner<br/>• Requirements parsing<br/>• Task decomposition<br/>• Spec generation"]
-        CR["Coder<br/>• Code generation<br/>• Multi-file output<br/>• Context injection"]
-        RV["Reviewer<br/>• Quality scoring<br/>• Security analysis<br/>• Suggestion ranking"]
-        TE["Tester<br/>• Test generation<br/>• Coverage analysis<br/>• Sandbox execution"]
+        PL["Planner"]
+        CR["Coder"]
+        RV["Reviewer"]
+        TE["Tester"]
     end
 
-    subgraph LLM["LLM Providers (5 backends)"]
-        NIM["NVIDIA NIM<br/>• nemotron-3-ultra"]
-        OAI["OpenAI<br/>• gpt-4o"]
-        AZR["Azure OpenAI<br/>• Enterprise endpoint"]
-        OLL["Ollama<br/>• Local inference"]
-        LC["llama.cpp<br/>• CPU/GPU native"]
+    subgraph LLM["LLM Providers"]
+        NIM["NVIDIA NIM"]
+        OAI["OpenAI"]
+        AZR["Azure OpenAI"]
+        OLL["Ollama"]
+        LC["llama.cpp"]
     end
 
     subgraph SANDBOX["Sandboxed Execution"]
-        MS["MalwareScanner<br/>• AST analysis<br/>• Dangerous call detection"]
-        DS["DevSandbox<br/>• CPU/memory limits<br/>• subprocess isolation"]
-        TR["TestRunner<br/>• pytest execution<br/>• Coverage reporting"]
+        MS["MalwareScanner"]
+        DS["DevSandbox"]
+        TR["TestRunner"]
     end
 
     subgraph OBSERVE["Observability"]
-        LOG["Structured Logging<br/>• JSON format<br/>• Request tracing"]
-        PROM["Prometheus Metrics<br/>• Agent latency<br/>• Token usage<br/>• Error rates"]
-        OTLP["OpenTelemetry<br/>• Distributed traces<br/>• OTLP export"]
+        LOG["Structured Logging"]
+        PROM["Prometheus Metrics"]
+        OTLP["OpenTelemetry Tracing"]
     end
 
     CLI --> CO
@@ -103,27 +103,16 @@ graph TB
     WS --> CO
     PY --> CO
 
-    CO --> PL
-    PL --> CR
-    CR --> RV
-    RV --> TE
+    CO --> PL --> CR --> RV --> TE
     TE -->|pass| CO
     RV -->|fail| CR
 
-    CO --> NIM
-    CO --> OAI
-    CO --> AZR
-    CO --> OLL
-    CO --> LC
+    CO --> NIM & OAI & AZR & OLL & LC
 
-    TE --> MS
-    MS --> DS
-    DS --> TR
+    TE --> MS --> DS --> TR
 
-    CO --> LOG
-    CO --> PROM
-    CO --> OTLP
-```
+    CO --> LOG & PROM & OTLP
+</div>
 
 ---
 

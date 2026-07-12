@@ -23,28 +23,73 @@ A production-grade **multi-agent system** for autonomous code generation, review
 
 ---
 
-## Architecture
+## System Architecture
 
-```
-┌─────────────┐     ┌─────────────┐     ┌─────────────┐     ┌─────────────┐
-│  Planner    │ ──▶ │   Coder     │ ──▶ │  Reviewer   │ ──▶ │   Tester    │
-│  (specs)    │     │  (writes)   │     │  (scores)   │     │  (runs)     │
-└─────────────┘     └─────────────┘     └─────────────┘     └─────────────┘
-       │                   │                   │                   │
-       └───────────────────┴───────────────────┴───────────────────┘
-                                   │
-                        ┌──────────▼──────────┐
-                        │  CodeOrchestrator   │
-                        │ (pipeline + retries)│
-                        └──────────┬──────────┘
-                                   │
-              ┌────────────────────┼────────────────────┐
-              ▼                    ▼                    ▼
-       ┌─────────────┐      ┌─────────────┐      ┌─────────────┐
-       │   FastAPI   │      │   Typer CLI │      │  WebSocket  │
-       │   REST API  │      │  (generate, │      │  Streaming  │
-       │             │      │   serve)    │      │             │
-       └─────────────┘      └─────────────┘      └─────────────┘
+```mermaid
+graph TB
+    subgraph ENTRY["Entry Points"]
+        CLI["Typer CLI<br/>• generate, serve, config"]
+        REST["FastAPI REST<br/>• POST /generate<br/>• GET /health"]
+        WS["WebSocket<br/>• /ws/generate<br/>• Real-time streaming"]
+        PY["Python Client<br/>• CodingAgentClient"]
+    end
+
+    subgraph ORCH["Pipeline Orchestrator"]
+        CO["CodeOrchestrator<br/>• Pipeline coordination<br/>• Retry + fallback<br/>• Streaming events<br/>• Metrics collection"]
+    end
+
+    subgraph AGENTS["Agent Swarm"]
+        PL["Planner<br/>• Requirements parsing<br/>• Task decomposition<br/>• Spec generation"]
+        CR["Coder<br/>• Code generation<br/>• Multi-file output<br/>• Context injection"]
+        RV["Reviewer<br/>• Quality scoring<br/>• Security analysis<br/>• Suggestion ranking"]
+        TE["Tester<br/>• Test generation<br/>• Coverage analysis<br/>• Sandbox execution"]
+    end
+
+    subgraph LLM["LLM Providers (5 backends)"]
+        NIM["NVIDIA NIM<br/>• nemotron-3-ultra"]
+        OAI["OpenAI<br/>• gpt-4o"]
+        AZR["Azure OpenAI<br/>• Enterprise endpoint"]
+        OLL["Ollama<br/>• Local inference"]
+        LC["llama.cpp<br/>• CPU/GPU native"]
+    end
+
+    subgraph SANDBOX["Sandboxed Execution"]
+        MS["MalwareScanner<br/>• AST analysis<br/>• Dangerous call detection"]
+        DS["DevSandbox<br/>• CPU/memory limits<br/>• subprocess isolation"]
+        TR["TestRunner<br/>• pytest execution<br/>• Coverage reporting"]
+    end
+
+    subgraph OBSERVE["Observability"]
+        LOG["Structured Logging<br/>• JSON format<br/>• Request tracing"]
+        PROM["Prometheus Metrics<br/>• Agent latency<br/>• Token usage<br/>• Error rates"]
+        OTLP["OpenTelemetry<br/>• Distributed traces<br/>• OTLP export"]
+    end
+
+    CLI --> CO
+    REST --> CO
+    WS --> CO
+    PY --> CO
+
+    CO --> PL
+    PL --> CR
+    CR --> RV
+    RV --> TE
+    TE -->|pass| CO
+    RV -->|fail| CR
+
+    CO --> NIM
+    CO --> OAI
+    CO --> AZR
+    CO --> OLL
+    CO --> LC
+
+    TE --> MS
+    MS --> DS
+    DS --> TR
+
+    CO --> LOG
+    CO --> PROM
+    CO --> OTLP
 ```
 
 ---

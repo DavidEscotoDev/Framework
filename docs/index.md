@@ -60,32 +60,69 @@ layout: default
 
 ```mermaid
 graph TB
-    subgraph MAIN["MAIN LOOP (orchestrator.py)"]
-        KS["KillSwitch<br/>• Balance monitor<br/>• Cancel all orders"]
-        RM["RiskManager<br/>• Kelly ¼×<br/>• VaR 2%<br/>• Sector 30%"]
-        MTS["MacroTrackerStrategy<br/>• FRED macro data<br/>• CPI/Fed signals<br/>• Conviction scoring"]
+    subgraph ENTRY["Entry Points"]
+        CLI["Typer CLI<br/>• generate, serve, config"]
+        REST["FastAPI REST<br/>• POST /generate<br/>• GET /health"]
+        WS["WebSocket<br/>• /ws/generate<br/>• Real-time streaming"]
+        PY["Python Client<br/>• CodingAgentClient"]
     end
 
-    WS["KalshiWebSocketClient<br/>• Auto-reconnect with backoff<br/>• Order book sync<br/>• Sequence gap detection<br/>• Heartbeat/ping"]
-
-    subgraph EXEC["Execution Engine"]
-        EE["ExecutionEngine<br/>• Shadow + Live paths<br/>• Duplicate detection<br/>• Fee accumulator<br/>• Audit logging"]
+    subgraph ORCH["Pipeline Orchestrator"]
+        CO["CodeOrchestrator<br/>• Pipeline coordination<br/>• Retry + fallback<br/>• Streaming events<br/>• Metrics collection"]
     end
 
-    subgraph STORAGE["Persistence Layer"]
-        SQL[("SQLite<br/>orders, positions,<br/>balance, shadow_trades")]
-        SLOG["Shadow Logs<br/>shadow_trades.log<br/>JSONL format"]
-        ALOG["Audit Log<br/>immutable events<br/>JSONL daily files"]
+    subgraph AGENTS["Agent Swarm"]
+        PL["Planner<br/>• Requirements parsing<br/>• Task decomposition<br/>• Spec generation"]
+        CR["Coder<br/>• Code generation<br/>• Multi-file output<br/>• Context injection"]
+        RV["Reviewer<br/>• Quality scoring<br/>• Security analysis<br/>• Suggestion ranking"]
+        TE["Tester<br/>• Test generation<br/>• Coverage analysis<br/>• Sandbox execution"]
     end
 
-    MAIN_LOOP["Main Loop<br/>Iteration"] -->|balance check<br/>risk sizing<br/>strategy signal| WS
-    WS -->|order book updates| MAIN_LOOP
-    MAIN_LOOP -->|place_order| EE
-    EE -->|shadow: log only<br/>live: REST API| KALSHI[("Kalshi API")]
-    EE --> SQL
-    EE --> SLOG
-    EE --> ALOG
-    KS -.->|trigger cancel| EE
+    subgraph LLM["LLM Providers (5 backends)"]
+        NIM["NVIDIA NIM<br/>• nemotron-3-ultra"]
+        OAI["OpenAI<br/>• gpt-4o"]
+        AZR["Azure OpenAI<br/>• Enterprise endpoint"]
+        OLL["Ollama<br/>• Local inference"]
+        LC["llama.cpp<br/>• CPU/GPU native"]
+    end
+
+    subgraph SANDBOX["Sandboxed Execution"]
+        MS["MalwareScanner<br/>• AST analysis<br/>• Dangerous call detection"]
+        DS["DevSandbox<br/>• CPU/memory limits<br/>• subprocess isolation"]
+        TR["TestRunner<br/>• pytest execution<br/>• Coverage reporting"]
+    end
+
+    subgraph OBSERVE["Observability"]
+        LOG["Structured Logging<br/>• JSON format<br/>• Request tracing"]
+        PROM["Prometheus Metrics<br/>• Agent latency<br/>• Token usage<br/>• Error rates"]
+        OTLP["OpenTelemetry<br/>• Distributed traces<br/>• OTLP export"]
+    end
+
+    CLI --> CO
+    REST --> CO
+    WS --> CO
+    PY --> CO
+
+    CO --> PL
+    PL --> CR
+    CR --> RV
+    RV --> TE
+    TE -->|pass| CO
+    RV -->|fail| CR
+
+    CO --> NIM
+    CO --> OAI
+    CO --> AZR
+    CO --> OLL
+    CO --> LC
+
+    TE --> MS
+    MS --> DS
+    DS --> TR
+
+    CO --> LOG
+    CO --> PROM
+    CO --> OTLP
 ```
 
 ---

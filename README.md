@@ -23,7 +23,7 @@ A production-grade **multi-agent system** for autonomous code generation, review
 
 ---
 
-## 🏗 Architecture
+## Architecture
 
 ```
 ┌─────────────┐     ┌─────────────┐     ┌─────────────┐     ┌─────────────┐

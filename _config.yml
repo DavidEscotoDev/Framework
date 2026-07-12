@@ -1,11 +1,11 @@
 title: Coding Agent Framework
 description: A multi-agent system for autonomous code generation, review, and testing
-theme: minima
 remote_theme: jekyll/minima
 
 plugins:
   - jekyll-feed
   - jekyll-seo-tag
+  - jekyll-sitemap
 
 markdown: kramdown
 kramdown:

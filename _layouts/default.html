@@ -1,8 +1,152 @@
 ---
 layout: default
 ---
-{% include skip-link.html %}
-<link rel="stylesheet" href="{{ '/assets/css/custom.css' | relative_url }}">
-<main id="main-content" class="page-content" aria-label="Content">
-  {{ content }}
-</main>
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#2563eb">
+  <meta name="description" content="{{ page.description | default: site.description }}">
+  <link rel="stylesheet" href="{{ '/assets/css/custom.css' | relative_url }}">
+  {% seo %}
+  {% feed_meta %}
+  {% if jekyll.environment == 'production' and site.google_analytics %}
+    {% include google-analytics.html %}
+  {% endif %}
+</head>
+<body>
+  {% include skip-link.html %}
+  <div class="site-wrapper">
+    <header class="site-header" role="banner">
+      <div class="header-inner">
+        <a class="site-title" href="{{ '/' | relative_url }}" aria-label="{{ site.title }} Home">
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <path d="M12 2L2 7l10 5 10-5-10-5z"/>
+            <path d="M2 17l10 5 10-5"/>
+            <path d="M2 12l10 5 10-5"/>
+          </svg>
+          <span>{{ site.title }}</span>
+        </a>
+        <button class="menu-toggle" aria-label="Toggle navigation" aria-expanded="false" aria-controls="main-nav">
+          <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <line x1="3" y1="12" x2="21" y2="12"/>
+            <line x1="3" y1="6" x2="21" y2="6"/>
+            <line x1="3" y1="18" x2="21" y2="18"/>
+          </svg>
+        </button>
+        <nav role="navigation" aria-label="Main navigation">
+          <ul class="nav-links" id="main-nav">
+            <li><a href="{{ '/' | relative_url }}"{% if page.url == '/' %} class="active"{% endif %}>Home</a></li>
+            <li><a href="{{ '/architecture.html' | relative_url }}"{% if page.url == '/architecture.html' %} class="active"{% endif %}>Architecture</a></li>
+            <li><a href="{{ '/api_reference.html' | relative_url }}"{% if page.url == '/api_reference.html' %} class="active"{% endif %}>API Reference</a></li>
+            <li><a href="https://github.com/DavidEscotoDev/Framework" target="_blank" rel="noopener noreferrer">GitHub</a></li>
+          </ul>
+        </nav>
+      </div>
+    </header>
+    <main class="main-content" role="main">
+      <article class="page-content">
+        {{ content }}
+      </article>
+    </main>
+  </div>
+  <footer class="site-footer" role="contentinfo">
+    <div class="footer-inner">
+      <p>&copy; {{ site.time | date: "%Y" }} {{ site.title }}. MIT License.</p>
+      <ul class="footer-links">
+        <li><a href="https://github.com/DavidEscotoDev/Framework" target="_blank" rel="noopener noreferrer">GitHub</a></li>
+        <li><a href="https://github.com/DavidEscotoDev/Framework/issues" target="_blank" rel="noopener noreferrer">Issues</a></li>
+        <li><a href="https://github.com/DavidEscotoDev/Framework/blob/master/CONTRIBUTING.md" target="_blank" rel="noopener noreferrer">Contributing</a></li>
+        <li><a href="https://github.com/DavidEscotoDev/Framework/blob/master/SECURITY.md" target="_blank" rel="noopener noreferrer">Security</a></li>
+      </ul>
+    </div>
+  </footer>
+  <script>
+    // Mobile menu toggle
+    const toggle = document.querySelector('.menu-toggle');
+    const nav = document.querySelector('.nav-links');
+    if (toggle && nav) {
+      toggle.addEventListener('click', () => {
+        const open = nav.classList.toggle('open');
+        toggle.setAttribute('aria-expanded', open);
+      });
+    }
+    
+    // Add copy buttons to code blocks
+    document.querySelectorAll('pre').forEach(pre => {
+      if (!pre.querySelector('.copy-btn')) {
+        const btn = document.createElement('button');
+        btn.className = 'copy-btn';
+        btn.textContent = 'Copy';
+        btn.setAttribute('aria-label', 'Copy code to clipboard');
+        btn.style.cssText = `
+          position: absolute;
+          top: 8px;
+          right: 8px;
+          padding: 4px 10px;
+          font-size: 0.7rem;
+          font-weight: 500;
+          color: var(--color-text-muted);
+          background: var(--color-bg-elevated);
+          border: 1px solid var(--color-border);
+          border-radius: 4px;
+          cursor: pointer;
+          opacity: 0;
+          transition: opacity 0.2s, color 0.2s, background 0.2s;
+        `;
+        pre.style.position = 'relative';
+        pre.appendChild(btn);
+        pre.addEventListener('mouseenter', () => btn.style.opacity = '1');
+        pre.addEventListener('mouseleave', () => btn.style.opacity = '0');
+        btn.addEventListener('click', async () => {
+          const code = pre.querySelector('code').textContent;
+          await navigator.clipboard.writeText(code);
+          btn.textContent = 'Copied!';
+          btn.style.color = 'var(--color-success)';
+          setTimeout(() => { btn.textContent = 'Copy'; btn.style.color = ''; }, 2000);
+        });
+      }
+    });
+    
+    // Smooth scroll for anchor links
+    document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+      anchor.addEventListener('click', function(e) {
+        const target = document.querySelector(this.getAttribute('href'));
+        if (target) {
+          e.preventDefault();
+          target.scrollIntoView({ behavior: 'smooth', block: 'start' });
+          target.focus({ preventScroll: true });
+        }
+      });
+    });
+    
+    // Add syntax highlighting line numbers
+    document.querySelectorAll('pre code').forEach((code, i) => {
+      if (!code.parentElement.querySelector('.line-numbers')) {
+        const lines = code.textContent.split('\n').length;
+        const lineNumbers = document.createElement('div');
+        lineNumbers.className = 'line-numbers';
+        lineNumbers.style.cssText = `
+          position: absolute;
+          left: 0;
+          top: 0;
+          bottom: 0;
+          width: 40px;
+          padding: 1rem 0.5rem;
+          background: rgba(0,0,0,0.03);
+          border-right: 1px solid var(--color-border);
+          text-align: right;
+          color: var(--color-text-light);
+          font-size: 0.8rem;
+          line-height: 1.6;
+          user-select: none;
+        `;
+        lineNumbers.innerHTML = Array.from({length: lines}, (_, i) => i+1).join('\n');
+        code.parentElement.style.paddingLeft = '50px';
+        code.parentElement.appendChild(lineNumbers);
+      }
+    });
+  </script>
+</body>
+</html>

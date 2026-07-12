@@ -1,99 +1,95 @@
 ---
 title: "Coding Agent Framework"
-description: "A multi-agent system for autonomous code generation, review, and testing"
+description: "A production-grade multi-agent system for autonomous code generation, review, and testing"
 layout: default
 ---
 
-# Coding Agent Framework
+<div class="hero">
+  <h1>Coding Agent Framework</h1>
+  <p class="hero-subtitle">A production-grade <strong>multi-agent system</strong> for autonomous code generation, review, and testing. Built with FastAPI, Typer, and a provider-agnostic LLM abstraction layer supporting <strong>5 backends</strong>.</p>
+  <div class="hero-badges">
+    <span class="badge">Python 3.11+</span>
+    <span class="badge badge-success">MIT License</span>
+    <span class="badge">Ruff</span>
+    <span class="badge">MyPy</span>
+    <span class="badge badge-warning">10 Tests Passing</span>
+  </div>
+</div>
 
-A production-grade **multi-agent system** for autonomous code generation, review, and testing. Built with FastAPI, Typer, and a provider-agnostic LLM abstraction layer supporting **5 backends** (NVIDIA NIM, OpenAI, Azure OpenAI, Ollama, llama.cpp).
-
-[![Python Version](https://img.shields.io/badge/python-3.11%2B-blue.svg)](https://python.org)
-[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
-[![Code Style: Ruff](https://img.shields.io/badge/code%20style-ruff-000000.svg)](https://github.com/astral-sh/ruff)
-[![Type Checked: mypy](https://img.shields.io/badge/type%20checked-mypy-blue.svg)](https://mypy-lang.org)
-[![Tests](https://img.shields.io/badge/tests-10%20passing-brightgreen.svg)](tests/)
-[![CI](https://github.com/DavidEscotoDev/Framework/actions/workflows/ci.yml/badge.svg)](https://github.com/DavidEscotoDev/Framework/actions)
-
----
-
-## 🎯 Why This Project
-
-| Problem | Solution |
-|---------|----------|
-| LLMs hallucinate buggy code | **ReviewerAgent** scores quality, halts on failure |
-| No safety for generated code | **MalwareScanner** + **Sandboxed execution** with CPU/memory limits |
-| Vendor lock-in to one LLM | **Provider abstraction** with automatic fallback chain |
-| No observability in AI pipelines | **Prometheus metrics** + **OpenTelemetry tracing** + **Structured logging** |
-| Hard to integrate into workflows | **REST API** + **WebSocket streaming** + **Python library** + **CLI** |
+<div class="hero-links">
+  <a href="https://github.com/DavidEscotoDev/Framework" target="_blank" rel="noopener noreferrer" class="btn btn-primary">
+    <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 19c-5 1.5-5-2.5-7-3m14 6v-3.87a3.37 3.37 0 0 0-.94-2.61c3.14-.35 6.44-1.54 6.44-7A5.44 5.44 0 0 0 20 4.77 5.07 5.07 0 0 0 19.91 1S18.73.65 16 2.48a13.38 13.38 0 0 0-7 0C6.27.65 5.09 1 5.09 1A5.07 5.07 0 0 0 5 4.77a5.44 5.44 0 0 0-1.5 3.78c0 5.42 3.3 6.61 6.44 7A3.37 3.37 0 0 0 9 18.13V22"></path></svg>
+    GitHub
+  </a>
+  <a href="architecture.html" class="btn btn-secondary">Architecture</a>
+  <a href="api_reference.html" class="btn btn-secondary">API Reference</a>
+</div>
 
 ---
 
-## 🏗 Architecture
-
-```
-┌─────────────┐     ┌─────────────┐     ┌─────────────┐     ┌─────────────┐
-│  Planner    │ ──▶ │   Coder     │ ──▶ │  Reviewer   │ ──▶ │   Tester    │
-│  (specs)    │     │  (writes)   │     │  (scores)   │     │  (runs)     │
-└─────────────┘     └─────────────┘     └─────────────┘     └─────────────┘
-       │                   │                   │                   │
-       └───────────────────┴───────────────────┴───────────────────┘
-                                   │
-                        ┌──────────▼──────────┐
-                        │  CodeOrchestrator   │
-                        │ (pipeline + retries)│
-                        └──────────┬──────────┘
-                                   │
-              ┌────────────────────┼────────────────────┐
-              ▼                    ▼                    ▼
-       ┌─────────────┐      ┌─────────────┐      ┌─────────────┐
-       │   FastAPI   │      │   Typer CLI │      │  WebSocket  │
-       │   REST API  │      │  (generate, │      │  Streaming  │
-       │             │      │   serve)    │      │             │
-       └─────────────┘      └─────────────┘      └─────────────┘
-```
-
----
-
-## ✨ Features
-
-| Category | Capabilities |
-|----------|--------------|
-| **Multi-Agent Pipeline** | Planner → Coder → Reviewer → Tester with configurable quality gates |
-| **LLM Provider Abstraction** | 5 backends (NVIDIA NIM, OpenAI, Azure OpenAI, Ollama, llama.cpp) with automatic fallback |
-| **Safety & Security** | Static malware scanning (regex) + subprocess sandbox with resource limits |
-| **Observability** | Structured JSON logging (structlog), Prometheus metrics (6 instruments), OpenTelemetry tracing |
-| **API Interfaces** | REST, WebSocket streaming, Python library client, Typer CLI |
-| **Configuration** | Pydantic Settings + YAML + environment variable overrides |
+<div class="card-grid">
+  <article class="card">
+    <h3>Multi-Agent Pipeline</h3>
+    <p>Planner → Coder → Reviewer → Tester with configurable quality gates and automatic retry logic.</p>
+  </article>
+  <article class="card">
+    <h3>5 LLM Providers</h3>
+    <p>NVIDIA NIM, OpenAI, Azure OpenAI, Ollama, and llama.cpp with automatic fallback chain.</p>
+  </article>
+  <article class="card">
+    <h3>Sandboxed Execution</h3>
+    <p>Subprocess-based test runner with CPU/memory limits and static malware scanning.</p>
+  </article>
+  <article class="card">
+    <h3>Full Observability</h3>
+    <p>Structured JSON logging, Prometheus metrics, and OpenTelemetry tracing with OTLP export.</p>
+  </article>
+  <article class="card">
+    <h3>Multi-Interface API</h3>
+    <p>REST, WebSocket streaming, Python client library, and Typer CLI in one package.</p>
+  </article>
+  <article class="card">
+    <h3>Production Config</h3>
+    <p>Pydantic Settings + YAML + environment variable overrides with full type safety.</p>
+  </article>
+</div>
 
 ---
 
-## 🚀 Quick Start
+## Quick Start
 
-```bash
-# 1. Clone and install
+<div class="card">
+  <h3>Installation</h3>
+  <pre><code class="language-bash"># Clone and install
 git clone https://github.com/DavidEscotoDev/Framework.git
 cd Framework
 pip install -e .[dev]
 
-# 2. Configure (add your API keys)
+# Configure (add your API keys)
 cp .env.example .env
 # Edit .env with your NVIDIA_NIM_API_KEY, OPENAI_API_KEY, etc.
+</code></pre>
+</div>
 
-# 3. Generate code from CLI
+<div class="card">
+  <h3>Generate Code (CLI)</h3>
+  <pre><code class="language-bash"># Generate from CLI
 coding-agent generate "Create a REST API for a todo list with FastAPI"
 
-# 4. Or start the API server
+# With output file
+coding-agent generate "REST API client" --output ./api_client.py
+
+# Start API server
 coding-agent serve --host 0.0.0.0 --port 8000
 
-# 5. Run tests
-pytest tests/ -v
-```
+# View configuration
+coding-agent config
+</code></pre>
+</div>
 
-### Using the Python Client
-
-```python
-import asyncio
+<div class="card">
+  <h3>Python Client</h3>
+  <pre><code class="language-python">import asyncio
 from coding_agent.api.client import CodingAgentClient
 
 async def main():
@@ -102,12 +98,12 @@ async def main():
     print(result.code)
 
 asyncio.run(main())
-```
+</code></pre>
+</div>
 
-### WebSocket Streaming
-
-```python
-import asyncio, json, websockets
+<div class="card">
+  <h3>WebSocket Streaming</h3>
+  <pre><code class="language-python">import asyncio, json, websockets
 
 async def stream():
     async with websockets.connect("ws://localhost:8000/ws/generate") as ws:
@@ -117,16 +113,76 @@ async def stream():
             print(f"[{data['stage']}] {data['message']}")
 
 asyncio.run(stream())
-```
+</code></pre>
+</div>
 
 ---
 
-## ⚙️ Configuration
+## Architecture Overview
 
-All settings in `config.yaml` (environment variables in `.env` take precedence):
+<div class="card">
+  <h3>Pipeline Flow</h3>
+  <pre><code>┌─────────────┐   ┌─────────────┐   ┌─────────────┐   ┌─────────────┐
+│  Planner    │──▶│   Coder     │──▶│  Reviewer   │──▶│   Tester    │
+│  (specs)    │   │  (writes)   │   │  (scores)   │   │  (runs)     │
+└─────────────┘   └─────────────┘   └─────────────┘   └─────────────┘
+      │                   │                   │                   │
+      └───────────────────┴───────────────────┴───────────────────┘
+                                    │
+                        ┌───────────▼───────────┐
+                        │   CodeOrchestrator    │
+                        │  (pipeline + retries) │
+                        └───────────┬───────────┘
+                                    │
+          ┌─────────────────────────┼─────────────────────────┐
+          ▼                         ▼                         ▼
+   ┌─────────────┐           ┌─────────────┐           ┌─────────────┐
+   │   FastAPI   │           │   Typer CLI │           │  WebSocket  │
+   │   REST API  │           │  (generate, │           │  Streaming  │
+   │             │           │   serve)    │           │             │
+   └─────────────┘           └─────────────┘           └─────────────┘
+</code></pre>
+</div>
 
-```yaml
-llm:
+---
+
+## Documentation
+
+<div class="card-grid">
+  <article class="card">
+    <h3><a href="architecture.html">Architecture</a></h3>
+    <p>Detailed system design, component interactions, and data flow diagrams.</p>
+  </article>
+  <article class="card">
+    <h3><a href="api_reference.html">API Reference</a></h3>
+    <p>REST endpoints, WebSocket protocol, Python library, and CLI commands.</p>
+  </article>
+  <article class="card">
+    <h3><a href="../CONTRIBUTING.md">Contributing</a></h3>
+    <p>Development workflow, code style, testing guidelines, and PR process.</p>
+  </article>
+  <article class="card">
+    <h3><a href="../SECURITY.md">Security</a></h3>
+    <p>Vulnerability reporting, security features, and best practices.</p>
+  </article>
+  <article class="card">
+    <h3><a href="../CHANGELOG.md">Changelog</a></h3>
+    <p>Version history following Keep a Changelog format.</p>
+  </article>
+  <article class="card">
+    <h3><a href="../CODE_OF_CONDUCT.md">Code of Conduct</a></h3>
+    <p>Community guidelines based on Contributor Covenant v2.1.</p>
+  </article>
+</div>
+
+---
+
+## Configuration
+
+<div class="card">
+  <h3>Key Settings</h3>
+  <p>All settings in <code>config.yaml</code> (environment variables in <code>.env</code> take precedence):</p>
+  <pre><code class="language-yaml">llm:
   providers:
     - name: nvidia_nim
       type: nvidia_nim
@@ -149,11 +205,12 @@ sandbox:
 orchestrator:
   halt_on_review_failure: true
   max_retries: 2
-```
+</code></pre>
+</div>
 
 ---
 
-## 📁 Project Structure
+## Project Structure
 
 ```
 src/coding_agent/
@@ -172,52 +229,28 @@ src/coding_agent/
 
 ---
 
-## 🧪 Testing
+## Testing
 
-```bash
-# Unit tests
-pytest tests/unit/ -v
-
-# Integration tests (mocked LLM)
-pytest tests/integration/ -v
-
-# All tests with coverage
-pytest tests/ --cov=src/coding_agent --cov-report=term-missing
-```
-
-**Current status**: 10 tests passing (7 unit + 3 integration)
-
----
-
-## 🔧 Development
-
-```bash
-# Install dev dependencies
-pip install -e .[dev]
-
-# Lint & format
-ruff check . && ruff format .
-
-# Type check
-mypy src/coding_agent --ignore-missing-imports
-
-# Full CI locally
-ruff check . && mypy src/coding_agent --ignore-missing-imports && pytest tests/ -v
-```
+<div class="card-grid">
+  <article class="card">
+    <h3>Unit Tests</h3>
+    <pre><code class="language-bash">pytest tests/unit/ -v</code></pre>
+    <p>Config loading, malware scanner</p>
+  </article>
+  <article class="card">
+    <h3>Integration Tests</h3>
+    <pre><code class="language-bash">pytest tests/integration/ -v</code></pre>
+    <p>Full pipeline with mocked LLM</p>
+  </article>
+  <article class="card">
+    <h3>Coverage</h3>
+    <pre><code class="language-bash">pytest tests/ --cov=src/coding_agent --cov-report=term-missing</code></pre>
+  </article>
+</div>
 
 ---
 
-## 📚 Documentation
-
-- [Architecture](architecture.md) - Detailed system design
-- [API Reference](api_reference.md) - REST, WebSocket, Python client, CLI
-- [Contributing](../CONTRIBUTING.md) - Development workflow, code style, PR process
-- [Security](../SECURITY.md) - Vulnerability reporting, security features
-- [Changelog](../CHANGELOG.md) - Version history
-
----
-
-## 🐳 Docker
+## Docker
 
 ```bash
 # Build
@@ -229,25 +262,13 @@ docker-compose -f docker/docker-compose.yml up
 
 ---
 
-## 🤝 Contributing
-
-Contributions welcome! Please read our [Contributing Guide](../CONTRIBUTING.md) and [Code of Conduct](../CODE_OF_CONDUCT.md).
-
-1. Fork the repository
-2. Create a feature branch (`git checkout -b feat/amazing-feature`)
-3. Run tests and linting
-4. Commit with conventional commits (`feat: add amazing feature`)
-5. Push and open a Pull Request
-
----
-
-## 📄 License
+## License
 
 MIT License - see [LICENSE](../LICENSE) for details.
 
 ---
 
-## 🙏 Acknowledgments
+## Acknowledgments
 
 - **NVIDIA NIM** for high-performance inference
 - **FastAPI** for the async web framework

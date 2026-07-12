@@ -5,16 +5,37 @@ import json
 
 from ..contracts import GeneratedCode
 from ..prompts.loader import load_prompt
+from ..state import SharedState
 from .base import BaseAgent
 from .models import AgentConfig, AgentResult
 
 
 class CoderAgent(BaseAgent):
+    """Agent responsible for generating code from an implementation plan.
+
+    Produces syntactically valid Python code, extracts imports, and validates
+    syntax via AST parsing before accepting the output.
+    """
+
     def __init__(self, llm, config: AgentConfig | None = None):
+        """Initialize the coder agent.
+
+        Args:
+            llm: LLM provider for generating code.
+            config: Optional AgentConfig. Uses defaults if not provided.
+        """
         prompt = load_prompt("coder", config.prompt_version if config else "1.0.0")
         super().__init__("coder", llm, prompt, config or AgentConfig())
 
-    async def execute(self, state) -> AgentResult:
+    async def execute(self, state: SharedState) -> AgentResult:
+        """Generate code based on the implementation plan.
+
+        Args:
+            state: SharedState containing the plan from the planner stage.
+
+        Returns:
+            AgentResult with GeneratedCode on success, error string on failure.
+        """
         self.logger.info("Coding", request_id=state.request_id)
         if not state.plan:
             return AgentResult(success=False, error="No plan available")
@@ -49,6 +70,14 @@ class CoderAgent(BaseAgent):
             return AgentResult(success=False, error=str(e))
 
     def _extract_imports(self, code: str) -> list[str]:
+        """Extract import statements from generated code.
+
+        Args:
+            code: Generated Python code as a string.
+
+        Returns:
+            List of import statement strings.
+        """
         imports = []
         for line in code.split("\n"):
             stripped = line.strip()

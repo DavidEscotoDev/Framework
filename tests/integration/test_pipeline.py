@@ -3,7 +3,9 @@
 from unittest.mock import AsyncMock
 
 import pytest
+from httpx import ASGITransport
 
+from coding_agent.api.server import create_app
 from coding_agent.config import Config
 from coding_agent.llm.base import LLMProvider
 from coding_agent.llm.models import LLMResponse, TokenUsage
@@ -207,3 +209,168 @@ async def test_review_failure_halts_pipeline(mock_llm_provider, monkeypatch):
     assert result.review is not None
     assert result.review.passed is False
     assert result.review.quality_score == 40
+
+
+@pytest.mark.asyncio
+async def test_planner_failure_returns_failed_status(mock_llm_provider, monkeypatch):
+    """Test that planner failure returns failed status immediately."""
+    from coding_agent.llm.models import LLMResponse, TokenUsage
+
+    fail_response = LLMResponse(
+        content="Error: Failed to generate plan",
+        usage=TokenUsage(prompt_tokens=10, completion_tokens=0, total_tokens=10),
+        model="test-model",
+        finish_reason="stop",
+        latency_ms=10,
+    )
+
+    import coding_agent.llm.factory as factory_module
+
+    monkeypatch.setattr(factory_module, "get_provider", lambda _name=None: mock_llm_provider)
+    monkeypatch.setattr(factory_module, "initialize_providers", lambda *_args, **_kwargs: None)
+
+    # Make the first call (planner) fail by clearing side_effect and setting return_value
+    mock_llm_provider.generate.side_effect = None
+    mock_llm_provider.generate.return_value = fail_response
+
+    orchestrator = CodeOrchestrator()
+    from coding_agent.agents import CoderAgent, PlannerAgent, ReviewerAgent, TesterAgent
+    from coding_agent.config import Config
+
+    cfg = Config()
+    orchestrator.register_agent("planner", PlannerAgent(mock_llm_provider, cfg.agents.planner))
+    orchestrator.register_agent("coder", CoderAgent(mock_llm_provider, cfg.agents.coder))
+    orchestrator.register_agent("reviewer", ReviewerAgent(mock_llm_provider, cfg.agents.reviewer))
+    orchestrator.register_agent("tester", TesterAgent(mock_llm_provider, cfg.agents.tester))
+
+    request = GenerationRequest(user_request="Invalid request", options=GenerationOptions(run_tests=False))
+    result = await orchestrator.generate_code(request)
+
+    assert result.status == "failed"
+    assert result.errors
+    assert "Failed to generate plan" in result.errors[0] or "Expecting value" in result.errors[0]
+
+
+@pytest.mark.asyncio
+async def test_sandbox_execution_basic():
+    """Test basic sandbox execution of generated code."""
+    from coding_agent.config import SandboxConfig
+    from coding_agent.sandbox.dev_sandbox import DevSandbox
+    from coding_agent.schemas import GeneratedCode
+
+    config = SandboxConfig(cpu_timeout_seconds=5, memory_limit_mb=256)
+    sandbox = DevSandbox(config)
+
+    # Simple valid code
+    code = GeneratedCode(
+        code="""
+def add(a: int, b: int) -> int:
+    return a + b
+
+result = add(2, 3)
+print(result)
+""",
+        language="python",
+        imports=[],
+        has_docstrings=False,
+        has_type_hints=True,
+    )
+
+    result = await sandbox.execute(code.code)
+
+    assert result.success is True
+    assert "5" in result.stdout
+
+
+@pytest.mark.asyncio
+async def test_sandbox_rejects_malicious_code():
+    """Test that sandbox rejects code with dangerous patterns."""
+    from coding_agent.config import SandboxConfig
+    from coding_agent.sandbox.dev_sandbox import DevSandbox
+    from coding_agent.schemas import GeneratedCode
+
+    config = SandboxConfig(cpu_timeout_seconds=5, memory_limit_mb=256)
+    sandbox = DevSandbox(config)
+
+    # Code with dangerous pattern (eval)
+    code = GeneratedCode(
+        code='eval("__import__(\'os\').system(\'ls\')")',
+        language="python",
+        imports=[],
+        has_docstrings=False,
+        has_type_hints=False,
+    )
+
+    result = await sandbox.execute(code.code)
+
+    assert result.success is False
+    assert "malware" in result.stderr.lower() or "dangerous" in result.stderr.lower()
+
+
+@pytest.mark.asyncio
+async def test_api_generate_endpoint(monkeypatch):
+    """Test the /generate REST endpoint with mocked LLM."""
+    from httpx import AsyncClient
+
+    # Reset factory state
+    import coding_agent.llm.factory as factory_module
+    factory_module._providers = {}
+    factory_module._fallback_chain = []
+
+    # Create mock provider
+    mock_provider = AsyncMock(spec=LLMProvider)
+    mock_provider.name = "test"
+    mock_provider.models = ["test-model"]
+    mock_provider.health_check = AsyncMock(return_value=True)
+    mock_provider.estimate_cost.return_value = 0.001
+
+    # Sequence: planner, coder, reviewer
+    planner_response = LLMResponse(
+        content='{"approach": "simple", "steps": ["write function"], "libraries": [], "edge_cases": [], "validation_criteria": "works", "complexity": "low", "estimated_tokens": 100}',
+        usage=TokenUsage(prompt_tokens=50, completion_tokens=50, total_tokens=100),
+        model="test-model",
+        finish_reason="stop",
+        latency_ms=20,
+    )
+    coder_response = LLMResponse(
+        content='```python\ndef hello() -> str:\n    return "Hello, World!"\n```',
+        usage=TokenUsage(prompt_tokens=50, completion_tokens=50, total_tokens=100),
+        model="test-model",
+        finish_reason="stop",
+        latency_ms=30,
+    )
+    reviewer_response = LLMResponse(
+        content='{"passed": true, "quality_score": 90, "issues": [], "suggestions": []}',
+        usage=TokenUsage(prompt_tokens=50, completion_tokens=50, total_tokens=100),
+        model="test-model",
+        finish_reason="stop",
+        latency_ms=20,
+    )
+    mock_provider.generate.side_effect = [planner_response, coder_response, reviewer_response]
+
+    def mock_get_provider(_name=None):
+        return mock_provider
+
+    # Patch the factory functions where they're used
+    monkeypatch.setattr("coding_agent.llm.factory.get_provider", mock_get_provider)
+    monkeypatch.setattr("coding_agent.llm.factory.initialize_providers", lambda *_args, **_kwargs: None)
+    # Also patch where orchestrator imports them
+    monkeypatch.setattr("coding_agent.orchestrator.initialize_providers", lambda *_args, **_kwargs: None)
+    monkeypatch.setattr("coding_agent.orchestrator.get_provider", mock_get_provider)
+
+
+    async with AsyncClient(transport=ASGITransport(app=create_app()), base_url="http://test") as client:
+        response = await client.post(
+            "/generate",
+            json={
+                "user_request": "Create a hello world function",
+                "options": {"run_tests": False},
+            },
+        )
+
+    assert response.status_code == 200
+    data = response.json()
+    assert data["status"] == "success"
+    assert data["code"] is not None
+    assert "hello" in data["code"]["code"].lower()
+    assert data["review"]["quality_score"] == 90

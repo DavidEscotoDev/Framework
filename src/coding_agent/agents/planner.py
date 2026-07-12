@@ -4,16 +4,38 @@ import json
 
 from ..contracts import ImplementationPlan
 from ..prompts.loader import load_prompt
+from ..state import SharedState
 from .base import BaseAgent
 from .models import AgentConfig, AgentResult
 
 
 class PlannerAgent(BaseAgent):
+    """Agent responsible for decomposing user requests into implementation plans.
+
+    Takes a natural language request and produces a structured ImplementationPlan
+    with steps, complexity assessment, edge cases, and validation criteria.
+    """
+
     def __init__(self, llm, config: AgentConfig | None = None):
+        """Initialize the planner agent.
+
+        Args:
+            llm: LLM provider for generating plans.
+            config: Optional AgentConfig. Uses defaults if not provided.
+        """
         prompt = load_prompt("planner", config.prompt_version if config else "1.0.0")
         super().__init__("planner", llm, prompt, config or AgentConfig())
 
-    async def execute(self, state) -> AgentResult:
+    async def execute(self, state: SharedState) -> AgentResult:
+        """Generate an implementation plan from the user request.
+
+        Args:
+            state: SharedState containing user_request, context, constraints,
+                and language in metadata.
+
+        Returns:
+            AgentResult with ImplementationPlan on success, error string on failure.
+        """
         self.logger.info("Planning", request_id=state.request_id)
         try:
             content = await self._call_llm(

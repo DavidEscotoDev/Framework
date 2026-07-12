@@ -30,7 +30,7 @@ jobs:
         run: ruff check .
 
       - name: Run type check (mypy)
-        run: mypy src/coding_agent --ignore-missing-imports || true
+        run: mypy src/coding_agent
 
       - name: Run tests
         run: pytest tests/ -v --tb=short

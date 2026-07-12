@@ -5,14 +5,19 @@ import time
 import httpx
 
 from .base import LLMProvider
-from .models import LLMResponse, TokenUsage
+from .models import LLMParams, LLMResponse, TokenUsage
 
 
 class NVIDIANIMProvider(LLMProvider):
-    def __init__(self, config, api_key: str):
-        if not api_key:
-            self._client = None  # Will fail on generate
+    """NVIDIA NIM provider implementation (OpenAI-compatible API)."""
 
+    def __init__(self, config, api_key: str):
+        """Initialize the NVIDIA NIM provider.
+
+        Args:
+            config: LLMProviderConfig with model list, name, and api_base.
+            api_key: NVIDIA NIM API key.
+        """
         self._config = config
         self._api_key = api_key
         self._base_url = config.api_base or "https://integrate.api.nvidia.com/v1"
@@ -24,13 +29,24 @@ class NVIDIANIMProvider(LLMProvider):
 
     @property
     def name(self) -> str:
+        """Provider name from configuration."""
         return self._config.name
 
     @property
     def models(self) -> list[str]:
+        """Supported model identifiers."""
         return self._config.models
 
-    async def generate(self, messages: list, params) -> object:
+    async def generate(self, messages: list, params: LLMParams) -> LLMResponse:
+        """Generate a completion using the NVIDIA NIM API.
+
+        Args:
+            messages: List of LLMMessage objects.
+            params: Generation parameters.
+
+        Returns:
+            LLMResponse with content, usage, and metadata.
+        """
         start = time.monotonic()
         payload = {
             "model": params.model,
@@ -58,6 +74,7 @@ class NVIDIANIMProvider(LLMProvider):
         )
 
     async def health_check(self) -> bool:
+        """Check if NVIDIA NIM API is accessible."""
         try:
             response = await self._client.get("/health", timeout=5.0)
             return response.status_code == 200
@@ -65,7 +82,9 @@ class NVIDIANIMProvider(LLMProvider):
             return False
 
     def estimate_cost(self, usage: object) -> float:
+        """Estimate cost based on total tokens (rough approximation)."""
         return usage.total_tokens * 5.0 / 1_000_000
 
-    async def close(self):
+    async def close(self) -> None:
+        """Close the HTTP client."""
         await self._client.aclose()

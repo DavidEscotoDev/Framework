@@ -11,7 +11,33 @@ from .models import AgentConfig, AgentResult
 
 
 class BaseAgent(ABC):
-    def __init__(self, name: str, llm: LLMProvider, prompt: PromptTemplate, config: AgentConfig):
+    """Abstract base class for all pipeline agents.
+
+    Provides common LLM interaction logic, prompt rendering, execution counting,
+    and structured logging. Concrete agents implement the `execute` method
+    to define their specific pipeline stage behavior.
+
+    Attributes:
+        name: Agent identifier (planner, coder, reviewer, tester).
+        _llm: LLM provider instance for generating responses.
+        _prompt: PromptTemplate with system and user templates.
+        _config: Agent-specific configuration (temperature, max_tokens, etc.).
+        logger: Structured logger for this agent.
+        execution_count: Number of successful LLM calls made.
+        failure_count: Number of failed LLM calls.
+    """
+
+    def __init__(
+        self, name: str, llm: LLMProvider, prompt: PromptTemplate, config: AgentConfig
+    ):
+        """Initialize the base agent.
+
+        Args:
+            name: Agent identifier.
+            llm: LLM provider for generating responses.
+            prompt: PromptTemplate containing system and user prompt templates.
+            config: AgentConfig with temperature, max_tokens, and thresholds.
+        """
         self.name = name
         self._llm = llm
         self._prompt = prompt
@@ -22,11 +48,30 @@ class BaseAgent(ABC):
 
     @abstractmethod
     async def execute(self, state: SharedState) -> AgentResult:
+        """Execute the agent's pipeline stage.
+
+        Args:
+            state: Shared pipeline state containing request, plan, code,
+                review, and test results from previous stages.
+
+        Returns:
+            AgentResult with success flag, output data, and optional error.
+        """
         pass
 
     async def _call_llm(
         self, user_template: str, system_override: str | None = None, **kwargs
     ) -> str:
+        """Call the LLM with rendered prompts and agent-specific parameters.
+
+        Args:
+            user_template: User prompt template string with placeholders.
+            system_override: Optional system prompt override.
+            **kwargs: Template variables for rendering the user prompt.
+
+        Returns:
+            LLM response content as a string.
+        """
         system = system_override or self._prompt.system
         user = render_prompt(user_template, **kwargs)
         messages = [

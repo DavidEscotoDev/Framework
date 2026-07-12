@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import time
 from collections.abc import AsyncIterator
-from datetime import datetime
+from datetime import UTC, datetime
 from uuid import uuid4
 
 from .agents import CoderAgent, PlannerAgent, ReviewerAgent, TesterAgent
@@ -20,6 +20,15 @@ from .state import SharedState
 
 
 class ProgressUpdate:
+    """Represents a progress update during pipeline execution.
+
+    Attributes:
+        stage: Current pipeline stage (planner, coder, reviewer, tester).
+        status: Status of the stage (started, completed, failed).
+        message: Human-readable status message.
+        data: Optional structured data associated with the stage.
+    """
+
     def __init__(self, stage: str, status: str, message: str, data: dict = None):
         self.stage = stage
         self.status = status
@@ -28,23 +37,49 @@ class ProgressUpdate:
 
 
 class CodeOrchestrator:
+    """Orchestrates the multi-agent code generation pipeline.
+
+    Manages the sequential execution of Planner → Coder → Reviewer → Tester agents,
+    handles LLM provider initialization and fallback, and exposes both synchronous
+    and streaming interfaces for code generation.
+
+    Attributes:
+        config: Configuration object containing agent settings, LLM providers,
+            and orchestrator behavior flags.
+        logger: Structured logger for pipeline events.
+    """
+
     def __init__(self, config: Config | None = None):
+        """Initialize the orchestrator with optional custom configuration.
+
+        Args:
+            config: Optional Config instance. If None, loads default configuration
+                from environment variables and config.yaml.
+        """
         self.config = config or Config()
         self.logger = get_logger("orchestrator")
         self._setup_providers()
         self._agents: dict = {}
 
-    def _setup_providers(self):
+    def _setup_providers(self) -> None:
+        """Initialize LLM providers from configuration with fallback chain."""
         initialize_providers(
             self.config.llm.providers,
             lambda cfg: self.config.get_provider_api_key(cfg),
             self.config.llm.fallback_chain,
         )
 
-    def register_agent(self, name: str, agent):
+    def register_agent(self, name: str, agent) -> None:
+        """Register a custom agent implementation.
+
+        Args:
+            name: Agent identifier (planner, coder, reviewer, tester).
+            agent: Agent instance implementing the BaseAgent interface.
+        """
         self._agents[name] = agent
 
-    def _ensure_agents(self):
+    def _ensure_agents(self) -> None:
+        """Lazy-initialize default agents if none registered."""
         if not self._agents:
             llm = get_provider()
             self.register_agent("planner", PlannerAgent(llm, self.config.agents.planner))
@@ -53,9 +88,26 @@ class CodeOrchestrator:
             self.register_agent("tester", TesterAgent(llm, self.config.agents.tester))
 
     async def generate_code(self, request: GenerationRequest) -> GenerationResult:
+        """Execute the full code generation pipeline synchronously.
+
+        Runs Planner → Coder → Reviewer → Tester (optional) in sequence,
+        with early exit on agent failure. Emits Prometheus metrics and
+        structured logs throughout.
+
+        Args:
+            request: Generation parameters including user prompt, context,
+                constraints, language, and execution options.
+
+        Returns:
+            GenerationResult with status (success/failed/partial), generated
+            code, review score, test output, and execution metadata.
+        """
         request_id = uuid4().hex[:12]
         start = time.monotonic()
-        metadata = GenerationMetadata(request_id=request_id, started_at=datetime.utcnow())
+        metadata = GenerationMetadata(
+            request_id=request_id,
+            started_at=datetime.now(UTC),
+        )
         state = SharedState(
             request_id=request_id,
             user_request=request.user_request,
@@ -105,7 +157,7 @@ class CodeOrchestrator:
 
             elapsed = (time.monotonic() - start) * 1000
             metadata.total_latency_ms = elapsed
-            metadata.completed_at = datetime.utcnow()
+            metadata.completed_at = datetime.now(UTC)
             pipeline_latency.observe(elapsed / 1000)
             pipeline_requests.labels(status="success").inc()
             self.logger.info("Pipeline complete", request_id=request_id, duration_ms=elapsed)
@@ -114,14 +166,26 @@ class CodeOrchestrator:
         except Exception as e:
             elapsed = (time.monotonic() - start) * 1000
             metadata.total_latency_ms = elapsed
-            metadata.completed_at = datetime.utcnow()
+            metadata.completed_at = datetime.now(UTC)
             pipeline_requests.labels(status="failed").inc()
             self.logger.error("Pipeline failed", error=str(e), request_id=request_id)
             return self._build_result("failed", request, state, metadata, errors=[str(e)])
         finally:
             active_requests.dec()
 
-    async def _run_agent(self, name: str, state: SharedState, metadata: GenerationMetadata):
+    async def _run_agent(
+        self, name: str, state: SharedState, metadata: GenerationMetadata
+    ):
+        """Execute a single agent and record latency metrics.
+
+        Args:
+            name: Agent identifier.
+            state: Shared pipeline state.
+            metadata: Generation metadata for recording latencies.
+
+        Returns:
+            AgentResult from the agent execution.
+        """
         agent = self._agents[name]
         start = time.monotonic()
         result = await agent.execute(state)
@@ -137,9 +201,22 @@ class CodeOrchestrator:
         request: GenerationRequest,
         state: SharedState,
         metadata: GenerationMetadata,
-        errors=None,
-        _warnings=None,
-    ):
+        errors: list[str] | None = None,
+        _warnings: list[str] | None = None,
+    ) -> GenerationResult:
+        """Construct a GenerationResult from pipeline state.
+
+        Args:
+            status: Pipeline completion status (success/failed/partial).
+            request: Original generation request.
+            state: Final shared state after pipeline execution.
+            metadata: Execution metadata including latencies and timestamps.
+            errors: Optional list of error messages.
+            _warnings: Optional list of warnings (currently unused).
+
+        Returns:
+            Populated GenerationResult.
+        """
         return GenerationResult(
             status=status,
             request_id=metadata.request_id,
@@ -153,9 +230,23 @@ class CodeOrchestrator:
         )
 
     async def generate_code_streaming(self, request: GenerationRequest) -> AsyncIterator[object]:
+        """Execute the pipeline with streaming progress updates.
+
+        Yields progress dictionaries at each stage boundary, suitable for
+        WebSocket or Server-Sent Events streaming to clients.
+
+        Args:
+            request: Generation parameters.
+
+        Yields:
+            Dict with stage, status, message, and optional data/result.
+        """
         request_id = uuid4().hex[:12]
         start = time.monotonic()
-        metadata = GenerationMetadata(request_id=request_id, started_at=datetime.utcnow())
+        metadata = GenerationMetadata(
+            request_id=request_id,
+            started_at=datetime.now(UTC),
+        )
         state = SharedState(
             request_id=request_id,
             user_request=request.user_request,
@@ -222,7 +313,7 @@ class CodeOrchestrator:
         result = await self._run_agent("tester", state, metadata)
         elapsed = (time.monotonic() - start) * 1000
         metadata.total_latency_ms = elapsed
-        metadata.completed_at = datetime.utcnow()
+        metadata.completed_at = datetime.now(UTC)
         yield {
             "stage": "tester",
             "status": "completed",

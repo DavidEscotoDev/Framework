@@ -5,24 +5,42 @@ import time
 import httpx
 
 from .base import LLMProvider
-from .models import LLMResponse, TokenUsage
+from .models import LLMParams, LLMResponse, TokenUsage
 
 
 class LlamaCppProvider(LLMProvider):
+    """llama.cpp server provider (OpenAI-compatible API)."""
+
     def __init__(self, config):
+        """Initialize the llama.cpp provider.
+
+        Args:
+            config: LLMProviderConfig with api_base and model list.
+        """
         self._config = config
         self._base_url = config.api_base or "http://localhost:8080"
         self._client = httpx.AsyncClient(base_url=self._base_url, timeout=60.0)
 
     @property
     def name(self) -> str:
+        """Provider name from configuration."""
         return self._config.name
 
     @property
     def models(self) -> list[str]:
+        """Supported model identifiers."""
         return self._config.models
 
-    async def generate(self, messages: list, params) -> object:
+    async def generate(self, messages: list, params: LLMParams) -> LLMResponse:
+        """Generate a completion using the llama.cpp server API.
+
+        Args:
+            messages: List of LLMMessage objects.
+            params: Generation parameters.
+
+        Returns:
+            LLMResponse with content, usage, and metadata.
+        """
         start = time.monotonic()
         payload = {
             "model": params.model,
@@ -51,6 +69,7 @@ class LlamaCppProvider(LLMProvider):
         )
 
     async def health_check(self) -> bool:
+        """Check if llama.cpp server is accessible."""
         try:
             response = await self._client.get("/health", timeout=5.0)
             return response.status_code == 200
@@ -58,7 +77,9 @@ class LlamaCppProvider(LLMProvider):
             return False
 
     def estimate_cost(self, _usage: object) -> float:
+        """Local inference has no direct cost."""
         return 0.0
 
     async def close(self):
+        """Close the HTTP client."""
         await self._client.aclose()

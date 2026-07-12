@@ -2,21 +2,13 @@ from __future__ import annotations
 
 import os
 from pathlib import Path
-from typing import Literal
 
 import yaml
 from pydantic import BaseModel
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
-
-class LLMProviderConfig(BaseModel):
-    name: str
-    type: Literal["openai", "azure_openai", "nvidia_nim", "ollama", "llama_cpp"]
-    api_base: str = ""
-    api_key_env: str = ""
-    endpoint_env: str = ""
-    models: list[str] = ["gpt-4o"]
-    priority: int = 99
+from .agents.models import AgentConfig
+from .llm.models import LLMProviderConfig
 
 
 class LLMDefaultsConfig(BaseModel):
@@ -35,16 +27,6 @@ class StaticAnalysisConfig(BaseModel):
     bandit: bool = True
     ruff: bool = True
     mypy: bool = False
-
-
-class AgentConfig(BaseModel):
-    temperature: float = 0.3
-    max_tokens: int = 4000
-    prompt_version: str = "v1.0.0"
-    timeout_seconds: int = 60
-    quality_threshold: int = 70
-    coverage_threshold: int = 80
-    static_analysis: StaticAnalysisConfig = StaticAnalysisConfig()
 
 
 class AgentsConfig(BaseModel):
@@ -101,7 +83,7 @@ class Config(BaseSettings):
 
     def __init__(self, **kwargs):
         config_path = Path("config.yaml")
-        yaml_config = {}
+        yaml_config: dict[str, object] = {}
         if config_path.exists():
             with open(config_path) as f:
                 yaml_config = yaml.safe_load(f) or {}

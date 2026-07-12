@@ -4,16 +4,37 @@ import json
 
 from ..contracts import ReviewResult
 from ..prompts.loader import load_prompt
+from ..state import SharedState
 from .base import BaseAgent
 from .models import AgentConfig, AgentResult
 
 
 class ReviewerAgent(BaseAgent):
+    """Agent responsible for reviewing generated code against quality criteria.
+
+    Evaluates code quality, security, and adherence to the implementation plan.
+    Sets a pass/fail flag based on the configured quality threshold.
+    """
+
     def __init__(self, llm, config: AgentConfig | None = None):
+        """Initialize the reviewer agent.
+
+        Args:
+            llm: LLM provider for generating reviews.
+            config: Optional AgentConfig with quality_threshold. Uses defaults if not provided.
+        """
         prompt = load_prompt("reviewer", config.prompt_version if config else "1.0.0")
         super().__init__("reviewer", llm, prompt, config or AgentConfig())
 
-    async def execute(self, state) -> AgentResult:
+    async def execute(self, state: SharedState) -> AgentResult:
+        """Review generated code against the plan and quality criteria.
+
+        Args:
+            state: SharedState containing code and plan from previous stages.
+
+        Returns:
+            AgentResult with ReviewResult on success, error string on failure.
+        """
         self.logger.info("Reviewing", request_id=state.request_id)
         if not state.code:
             return AgentResult(success=False, error="No code available")

@@ -3,16 +3,37 @@ from __future__ import annotations
 import json
 
 from ..prompts.loader import load_prompt
+from ..state import SharedState
 from .base import BaseAgent
 from .models import AgentConfig, AgentResult
 
 
 class TesterAgent(BaseAgent):
+    """Agent responsible for generating test code for the implemented solution.
+
+    Produces test cases covering the main functionality and edge cases
+    identified during planning. Does not execute tests - that happens in the sandbox.
+    """
+
     def __init__(self, llm, config: AgentConfig | None = None):
+        """Initialize the tester agent.
+
+        Args:
+            llm: LLM provider for generating test code.
+            config: Optional AgentConfig. Uses defaults if not provided.
+        """
         prompt = load_prompt("tester", config.prompt_version if config else "1.0.0")
         super().__init__("tester", llm, prompt, config or AgentConfig())
 
-    async def execute(self, state) -> AgentResult:
+    async def execute(self, state: SharedState) -> AgentResult:
+        """Generate test code based on the implementation and plan.
+
+        Args:
+            state: SharedState containing code and plan from previous stages.
+
+        Returns:
+            AgentResult with generated test code on success, error string on failure.
+        """
         self.logger.info("Testing", request_id=state.request_id)
         if not state.code:
             return AgentResult(success=False, error="No code available")

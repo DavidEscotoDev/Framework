@@ -1,0 +1,61 @@
+title: Coding Agent Framework
+description: A multi-agent system for autonomous code generation, review, and testing
+theme: minima
+remote_theme: jekyll/minima
+
+plugins:
+  - jekyll-feed
+  - jekyll-seo-tag
+
+markdown: kramdown
+kramdown:
+  input: GFM
+  syntax_highlighter: rouge
+  syntax_highlighter_opts:
+    block:
+      line_numbers: true
+
+include:
+  - _includes
+  - _layouts
+  - assets
+
+exclude:
+  - node_modules
+  - vendor
+  - Gemfile
+  - Gemfile.lock
+  - .gitignore
+  - README.md
+  - CONTRIBUTING.md
+  - CODE_OF_CONDUCT.md
+  - SECURITY.md
+  - CHANGELOG.md
+  - LICENSE
+  - docker/
+  - src/
+  - tests/
+  - pyproject.toml
+  - config.yaml
+  - .env.example
+  - .github/
+
+minima:
+  skin: classic
+  date_format: "%b %-d, %Y"
+
+collections:
+  docs:
+    output: true
+    permalink: /:name/
+
+defaults:
+  - scope:
+      path: ""
+      type: "docs"
+    values:
+      layout: "default"
+  - scope:
+      path: ""
+    values:
+      layout: "default"

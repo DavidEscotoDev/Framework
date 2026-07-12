@@ -11,7 +11,7 @@ A production-grade **multi-agent system** for autonomous code generation, review
 
 ---
 
-## 🎯 Why This Project
+## Why This Project
 
 | Problem | Solution |
 |---------|----------|
@@ -49,7 +49,7 @@ A production-grade **multi-agent system** for autonomous code generation, review
 
 ---
 
-## ✨ Features
+## Features
 
 | Category | Capabilities |
 |----------|--------------|
@@ -62,7 +62,7 @@ A production-grade **multi-agent system** for autonomous code generation, review
 
 ---
 
-## 🚀 Quick Start
+## Quick Start
 
 ```bash
 # 1. Clone and install
@@ -115,7 +115,7 @@ asyncio.run(stream())
 
 ---
 
-## ⚙️ Configuration
+## Configuration
 
 All settings in `config.yaml` (environment variables in `.env` take precedence):
 
@@ -147,7 +147,7 @@ orchestrator:
 
 ---
 
-## 📁 Project Structure
+## Project Structure
 
 ```
 src/coding_agent/
@@ -173,7 +173,7 @@ examples/
 
 ---
 
-## 🧪 Testing
+## Testing
 
 ```bash
 # Unit tests
@@ -190,7 +190,7 @@ pytest tests/ --cov=src/coding_agent --cov-report=term-missing
 
 ---
 
-## 🔧 Development
+## Development
 
 ```bash
 # Install dev dependencies
@@ -208,7 +208,7 @@ ruff check . && mypy src/coding_agent --ignore-missing-imports && pytest tests/ 
 
 ---
 
-## 📊 Observability
+## Observability
 
 | Component | Implementation |
 |-----------|----------------|
@@ -223,7 +223,7 @@ python -c "from coding_agent.observability.metrics import start_metrics_server; 
 
 ---
 
-## 🐳 Docker
+## Docker
 
 ```bash
 # Build
@@ -235,7 +235,7 @@ docker-compose -f docker/docker-compose.yml up
 
 ---
 
-## 🤝 Contributing
+## Contributing
 
 Contributions are welcome! Please read our [Contributing Guide](CONTRIBUTING.md) and [Code of Conduct](CODE_OF_CONDUCT.md).
 
@@ -247,13 +247,13 @@ Contributions are welcome! Please read our [Contributing Guide](CONTRIBUTING.md)
 
 ---
 
-## 📄 License
+## License
 
 MIT License - see [LICENSE](LICENSE) for details.
 
 ---
 
-## 🙏 Acknowledgments
+## Acknowledgments
 
 - **NVIDIA NIM** for high-performance inference
 - **FastAPI** for the async web framework

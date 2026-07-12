@@ -5,13 +5,13 @@ import time
 import httpx
 
 from .base import LLMProvider
-from .models import LLMParams, LLMResponse, TokenUsage
+from .models import LLMParams, LLMProviderConfig, LLMResponse, TokenUsage
 
 
 class LlamaCppProvider(LLMProvider):
     """llama.cpp server provider (OpenAI-compatible API)."""
 
-    def __init__(self, config):
+    def __init__(self, config: LLMProviderConfig):
         """Initialize the llama.cpp provider.
 
         Args:

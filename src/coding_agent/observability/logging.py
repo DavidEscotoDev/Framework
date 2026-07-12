@@ -1,11 +1,14 @@
 from __future__ import annotations
 
+from collections.abc import Callable, MutableMapping
+from typing import Any
+
 import structlog
 
 
-def configure_logging(log_level: str = "INFO", log_format: str = "json"):
+def configure_logging(log_level: str = "INFO", log_format: str = "json") -> None:
     if log_format == "json":
-        processors = [
+        processors: list[Callable[[Any, str, MutableMapping[str, Any]], Any]] = [
             structlog.stdlib.filter_by_level,
             structlog.stdlib.add_logger_name,
             structlog.stdlib.add_log_level,

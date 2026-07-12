@@ -5,13 +5,13 @@ import time
 from openai import AsyncOpenAI
 
 from .base import LLMProvider
-from .models import LLMParams, LLMResponse, TokenUsage
+from .models import LLMParams, LLMProviderConfig, LLMResponse, TokenUsage
 
 
 class OpenAIProvider(LLMProvider):
     """OpenAI API provider implementation."""
 
-    def __init__(self, config, api_key: str):
+    def __init__(self, config: LLMProviderConfig, api_key: str):
         """Initialize the OpenAI provider.
 
         Args:
@@ -53,15 +53,19 @@ class OpenAIProvider(LLMProvider):
         elapsed = (time.monotonic() - start) * 1000
         choice = response.choices[0]
         usage = response.usage
+        content = choice.message.content or ""
+        prompt_tokens = usage.prompt_tokens if usage else 0
+        completion_tokens = usage.completion_tokens if usage else 0
+        total_tokens = usage.total_tokens if usage else 0
         return LLMResponse(
-            content=choice.message.content,
+            content=content,
             usage=TokenUsage(
-                prompt_tokens=usage.prompt_tokens,
-                completion_tokens=usage.completion_tokens,
-                total_tokens=usage.total_tokens,
+                prompt_tokens=prompt_tokens,
+                completion_tokens=completion_tokens,
+                total_tokens=total_tokens,
             ),
             model=response.model,
-            finish_reason=choice.finish_reason,
+            finish_reason=choice.finish_reason or "stop",
             latency_ms=elapsed,
         )
 
@@ -75,4 +79,4 @@ class OpenAIProvider(LLMProvider):
 
     def estimate_cost(self, usage: object) -> float:
         """Estimate cost based on total tokens (rough approximation)."""
-        return usage.total_tokens * 10.0 / 1_000_000
+        return getattr(usage, "total_tokens", 0) * 10.0 / 1_000_000

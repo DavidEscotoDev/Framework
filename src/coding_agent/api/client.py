@@ -11,7 +11,7 @@ from ..schemas import GenerationRequest, GenerationResult
 class CodingAgentClient:
     def __init__(self, config: Config | None = None):
         self.config = config or Config()
-        self._orchestrator = None
+        self._orchestrator: CodeOrchestrator | None = None
 
     def _get_orchestrator(self) -> CodeOrchestrator:
         if self._orchestrator is None:

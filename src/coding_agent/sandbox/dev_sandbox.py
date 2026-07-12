@@ -18,7 +18,7 @@ class SandboxResult:
         exit_code: int = 0,
         execution_time_ms: int = 0,
         malware_detected: bool = False,
-        malware_details: list = None,
+        malware_details: list | None = None,
     ):
         self.success = success
         self.stdout = stdout

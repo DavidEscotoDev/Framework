@@ -5,13 +5,13 @@ import time
 import httpx
 
 from .base import LLMProvider
-from .models import LLMParams, LLMResponse, TokenUsage
+from .models import LLMParams, LLMProviderConfig, LLMResponse, TokenUsage
 
 
 class NVIDIANIMProvider(LLMProvider):
     """NVIDIA NIM provider implementation (OpenAI-compatible API)."""
 
-    def __init__(self, config, api_key: str):
+    def __init__(self, config: LLMProviderConfig, api_key: str):
         """Initialize the NVIDIA NIM provider.
 
         Args:
@@ -83,7 +83,7 @@ class NVIDIANIMProvider(LLMProvider):
 
     def estimate_cost(self, usage: object) -> float:
         """Estimate cost based on total tokens (rough approximation)."""
-        return usage.total_tokens * 5.0 / 1_000_000
+        return getattr(usage, "total_tokens", 0) * 5.0 / 1_000_000
 
     async def close(self) -> None:
         """Close the HTTP client."""

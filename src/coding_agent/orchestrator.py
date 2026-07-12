@@ -29,7 +29,7 @@ class ProgressUpdate:
         data: Optional structured data associated with the stage.
     """
 
-    def __init__(self, stage: str, status: str, message: str, data: dict = None):
+    def __init__(self, stage: str, status: str, message: str, data: dict | None = None):
         self.stage = stage
         self.status = status
         self.message = message
@@ -218,7 +218,7 @@ class CodeOrchestrator:
             Populated GenerationResult.
         """
         return GenerationResult(
-            status=status,
+            status=status,  # type: ignore[arg-type]
             request_id=metadata.request_id,
             user_request=request.user_request,
             plan=state.plan,
@@ -229,7 +229,7 @@ class CodeOrchestrator:
             errors=errors or [],
         )
 
-    async def generate_code_streaming(self, request: GenerationRequest) -> AsyncIterator[object]:
+    async def generate_code_streaming(self, request: GenerationRequest) -> AsyncIterator[dict]:
         """Execute the pipeline with streaming progress updates.
 
         Yields progress dictionaries at each stage boundary, suitable for

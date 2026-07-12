@@ -63,7 +63,7 @@ class TestRunner:
                 except TimeoutError:
                     proc.kill()
                     return TestResult(all_passed=False, test_output="Test execution timed out")
-                elapsed = (time.monotonic() - start) * 1000
+                elapsed = int((time.monotonic() - start) * 1000)
                 output = (stdout.decode() if stdout else "") + (stderr.decode() if stderr else "")
                 passed = output.count(" PASSED")
                 failed = output.count(" FAILED")

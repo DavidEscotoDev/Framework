@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import os
 from pathlib import Path
+from typing import Any
 
 import yaml
 from pydantic import BaseModel
@@ -83,7 +84,7 @@ class Config(BaseSettings):
 
     def __init__(self, **kwargs):
         config_path = Path("config.yaml")
-        yaml_config: dict[str, object] = {}
+        yaml_config: dict[str, Any] = {}
         if config_path.exists():
             with open(config_path) as f:
                 yaml_config = yaml.safe_load(f) or {}

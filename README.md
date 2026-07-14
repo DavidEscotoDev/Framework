@@ -4,22 +4,47 @@
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 [![Code Style: Ruff](https://img.shields.io/badge/code%20style-ruff-000000.svg)](https://github.com/astral-sh/ruff)
 [![Type Checked: mypy](https://img.shields.io/badge/type%20checked-mypy-blue.svg)](https://mypy-lang.org)
-[![Tests](https://img.shields.io/badge/tests-10%20passing-brightgreen.svg)](tests/)
-[![CI](https://github.com/realj/coding-agent-framework/actions/workflows/ci.yml/badge.svg)](https://github.com/realj/coding-agent-framework/actions)
+[![CI](https://github.com/DavidEscotoDev/coding-agent-framework/actions/workflows/ci.yml/badge.svg)](https://github.com/DavidEscotoDev/coding-agent-framework/actions/workflows/ci.yml)
+[![Coverage](https://img.shields.io/endpoint?url=https://gist.githubusercontent.com/DavidEscotoDev/coverage-badge/raw/main/framework.json)](https://github.com/DavidEscotoDev/coding-agent-framework/actions/workflows/ci.yml)
 
-A production-grade **multi-agent system** for autonomous code generation, review, and testing. Built with FastAPI, Typer, and a provider-agnostic LLM abstraction layer supporting **5 backends** (NVIDIA NIM, OpenAI, Azure OpenAI, Ollama, llama.cpp).
+**TL;DR** — Production-grade multi-agent code generation pipeline: Planner → Coder → Reviewer → Tester with 5 LLM backends (NVIDIA NIM, OpenAI, Azure, Ollama, llama.cpp), sandboxed execution, and full observability (Prometheus + OpenTelemetry + structured logs). CLI, REST API, WebSocket streaming, and Python client included.
 
----
+![Demo](docs/demo.gif)  <!-- TODO: Record CLI + WebSocket streaming demo GIF -->
 
 ## Why This Project
 
 | Problem | Solution |
 |---------|----------|
-| LLMs hallucinate buggy code | **ReviewerAgent** scores quality, halts on failure |
-| No safety for generated code | **MalwareScanner** + **Sandboxed execution** with CPU/memory limits |
-| Vendor lock-in to one LLM | **Provider abstraction** with automatic fallback chain |
-| No observability in AI pipelines | **Prometheus metrics** + **OpenTelemetry tracing** + **Structured logging** |
-| Hard to integrate into workflows | **REST API** + **WebSocket streaming** + **Python library** + **CLI** |
+| LLMs hallucinate buggy code | **ReviewerAgent** scores quality, halts pipeline on failure |
+| No safety for generated code | **MalwareScanner** (AST analysis) + **Sandboxed execution** (CPU/memory limits) |
+| Vendor lock-in to one LLM | **Provider abstraction** with automatic fallback chain across 5 backends |
+| No observability in AI pipelines | **Prometheus metrics** + **OpenTelemetry tracing** + **Structured JSON logging** |
+| Hard to integrate into workflows | **REST API** + **WebSocket streaming** + **Python library** + **Typer CLI** |
+
+## Tech Stack
+
+| Category | Technology |
+|----------|------------|
+| Orchestration | FastAPI, Typer CLI |
+| LLM Providers | NVIDIA NIM, OpenAI, Azure OpenAI, Ollama, llama.cpp |
+| Safety | AST-based malware scanner, subprocess sandbox (resource limits) |
+| Observability | structlog, Prometheus (6 instruments), OpenTelemetry (OTLP) |
+| Testing | pytest, hypothesis, pytest-asyncio |
+
+## Quick Start (≤5 commands)
+
+```bash
+git clone https://github.com/DavidEscotoDev/coding-agent-framework.git
+cd coding-agent-framework
+pip install -e .[dev]
+cp .env.example .env  # Add NVIDIA_NIM_API_KEY, OPENAI_API_KEY, etc.
+coding-agent generate "Create a REST API for a todo list with FastAPI"
+```
+
+## What I Learned
+
+- **Multi-agent orchestration**: Pipeline coordination with retry/fallback logic, streaming events, quality gates that halt on review failure — patterns transferable to any LLM workflow
+- **Provider-agnostic LLM abstraction**: Single interface with 5 concrete backends + automatic fallback chain — eliminates vendor lock-in, enables local-first development with Ollama/llama.cpp
 
 ---
 
@@ -92,26 +117,22 @@ graph TB
     CO --> OTLP
 ```
 
----
-
 ## Features
 
 | Category | Capabilities |
 |----------|--------------|
 | **Multi-Agent Pipeline** | Planner → Coder → Reviewer → Tester with configurable quality gates |
-| **LLM Provider Abstraction** | 5 backends (NVIDIA NIM, OpenAI, Azure OpenAI, Ollama, llama.cpp) with automatic fallback |
-| **Safety & Security** | Static malware scanning (regex-based) + subprocess sandbox with resource limits |
-| **Observability** | Structured JSON logging (structlog), Prometheus metrics (6 instruments), OpenTelemetry tracing |
+| **LLM Provider Abstraction** | 5 backends with automatic fallback chain |
+| **Safety & Security** | Static malware scanning (AST) + subprocess sandbox with resource limits |
+| **Observability** | Structured JSON logging, Prometheus metrics (6 instruments), OpenTelemetry tracing |
 | **API Interfaces** | REST, WebSocket streaming, Python library client, Typer CLI |
 | **Configuration** | Pydantic Settings + YAML + environment variable overrides |
-
----
 
 ## Quick Start
 
 ```bash
 # 1. Clone and install
-git clone https://github.com/realj/coding-agent-framework.git
+git clone https://github.com/DavidEscotoDev/coding-agent-framework.git
 cd coding-agent-framework
 pip install -e .[dev]
 
@@ -158,8 +179,6 @@ async def stream():
 asyncio.run(stream())
 ```
 
----
-
 ## Configuration
 
 All settings in `config.yaml` (environment variables in `.env` take precedence):
@@ -190,8 +209,6 @@ orchestrator:
   max_retries: 2
 ```
 
----
-
 ## Project Structure
 
 ```
@@ -216,8 +233,6 @@ examples/
 └── quickstart.py       # End-to-end programmatic usage
 ```
 
----
-
 ## Testing
 
 ```bash
@@ -232,8 +247,6 @@ pytest tests/ --cov=src/coding_agent --cov-report=term-missing
 ```
 
 **Current status**: 10 tests passing (7 unit + 3 integration)
-
----
 
 ## Development
 
@@ -251,8 +264,6 @@ mypy src/coding_agent --ignore-missing-imports
 ruff check . && mypy src/coding_agent --ignore-missing-imports && pytest tests/ -v
 ```
 
----
-
 ## Observability
 
 | Component | Implementation |
@@ -266,8 +277,6 @@ Start metrics server:
 python -c "from coding_agent.observability.metrics import start_metrics_server; start_metrics_server(9090)"
 ```
 
----
-
 ## Docker
 
 ```bash
@@ -277,8 +286,6 @@ docker build -t coding-agent -f docker/Dockerfile .
 # Run with docker-compose (includes Ollama, Jaeger, Prometheus)
 docker-compose -f docker/docker-compose.yml up
 ```
-
----
 
 ## Contributing
 
@@ -290,13 +297,9 @@ Contributions are welcome! Please read our [Contributing Guide](CONTRIBUTING.md)
 4. Commit with conventional commits (`feat: add amazing feature`)
 5. Push and open a Pull Request
 
----
-
 ## License
 
 MIT License - see [LICENSE](LICENSE) for details.
-
----
 
 ## Acknowledgments
 

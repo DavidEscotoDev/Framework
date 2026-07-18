@@ -303,8 +303,8 @@ MIT License - see [LICENSE](LICENSE) for details.
 
 ## Acknowledgments
 
-- **NVIDIA NIM** for high-performance inference
-- **FastAPI** for the async web framework
-- **Pydantic** for data validation
-- **OpenTelemetry** for distributed tracing
-- **Prometheus** for metrics collection
+- **NVIDIA NIM** for high-performance inference.
+- **FastAPI** for the async web framework.
+- **Pydantic** for data validation.
+- **OpenTelemetry** for distributed tracing.
+- **Prometheus** for metrics collection.
